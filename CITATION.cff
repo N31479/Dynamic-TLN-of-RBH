@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+title: "Dynamic TLN codes for Bardeen regular black holes"
+message: "If you use this code, please cite the accompanying paper and this repository."
+type: software
+authors:
+  - family-names: Bhattacharyya
+    given-names: Arpan
+  - family-names: Kumar
+    given-names: Naman
+  - family-names: Kumar
+    given-names: Shailesh
+repository-code: "https://github.com/N31479/Dynamic-TLN-of-RBH"
+license: MIT
