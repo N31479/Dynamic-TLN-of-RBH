@@ -11,7 +11,7 @@ The repository is intentionally focused on the Bardeen-sector numerical calculat
 2. `bardeen_shell_eft_comparison.py`  
    Compares the direct test-tensor response with the renormalized shell-EFT response for the Bardeen geometry in the low-frequency regime.
 
-The paper also discusses Hayward and Fan--Wang geometries and additional coupled-response sectors. Those calculations are not claimed to be included in this repository unless explicitly added later.
+The paper also discusses Hayward and Fan--Wang geometries and additional coupled-response sectors. Those computations can be implemented analogously by replacing the Bardeen metric functions and matter-sector coefficients with the corresponding background quantities.
 
 ## Requirements
 
