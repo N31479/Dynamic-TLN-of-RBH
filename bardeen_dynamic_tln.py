@@ -15,7 +15,7 @@ The extremal value is
     ell_ext = 4 M / (3 sqrt(3)).
 
 The default output is the dimensionless normalized response used in the
-accompanying paper, obtained by dividing the raw response by ``1e7``.
+accompanying paper, obtained by dividing the raw response by ``1e7`` (merely a choice of normalization).
 """
 
 from __future__ import annotations
