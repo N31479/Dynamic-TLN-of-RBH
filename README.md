@@ -1,15 +1,19 @@
 # Dynamic TLN codes for Bardeen regular black holes
 
-This repository contains two Python scripts accompanying the paper
+This repository contains three Python scripts accompanying the paper
 **“Dynamical tidal response of regular black holes: Perturbative analysis and shell EFT interpretation.”**
 
 The repository is intentionally focused on the Bardeen-sector numerical calculations:
 
 1. `bardeen_dynamic_tln.py`  
-   Computes frequency-dependent quadrupolar tidal Love-number scans for the Bardeen regular black hole using the coupled boundary-value problem, ingoing-wave boundary conditions, and hybrid far-field extraction.
+   Computes frequency-dependent quadrupolar tidal Love-number scans (polar sector) for the Bardeen regular black hole using the coupled boundary-value problem, ingoing-wave boundary conditions, and hybrid far-field extraction.
 
 2. `bardeen_shell_eft_comparison.py`  
    Compares the direct test-tensor response with the renormalized shell-EFT response for the Bardeen geometry in the low-frequency regime.
+
+ 3. `bardeen_axial_dynamic_tln.py`  
+   Computes frequency-dependent quadrupolar tidal Love-number scans (axial sector) for the Bardeen regular black hole using the coupled boundary-value problem, ingoing-wave boundary conditions, and hybrid far-field extraction.
+  
 
 The paper also discusses Hayward and Fan--Wang geometries and additional coupled-response sectors. Those computations can be implemented analogously by replacing the Bardeen metric functions and matter-sector coefficients with the corresponding background quantities.
 
