@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
 """
-Bardeen probe-response and shell-EFT comparison.
+Bardeen direct tensor response and scalar Shell-EFT proxy.
 
-This module implements the numerical calculation used to compare two definitions of
-Bardeen-sector probe tidal response:
+This self-contained module compares:
 
-1. Direct test-tensor response from the exterior Regge--Wheeler boundary-value problem.
-2. Renormalized shell-EFT response obtained by finite-radius matching and subtraction
-   of the Schwarzschild contribution.
+1. The direct dynamical response of a probe tensor field on the Bardeen
+   black-hole background.
+2. A scalar Shell-EFT response used as a proxy for the tensor response.
 
-The implementation follows the original research script but separates geometry,
-solvers, extraction routines, and scan utilities so that the calculation is easier to
-reuse and cite.
+The raw direct and shell quantities are converted to a common convention
+through two once-and-for-all calibration constants. These constants are
+determined at the lowest frequency in ``omega_list`` over the interval
+specified by ``CHI_CAL`` and are then held fixed for every deformation
+parameter and frequency.
+
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from math import factorial
-from pathlib import Path
-from typing import Iterable
 
+import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 from scipy.integrate import solve_bvp, solve_ivp
 from scipy.interpolate import UnivariateSpline
 from scipy.linalg import lstsq
@@ -30,538 +29,1268 @@ from scipy.optimize import brentq
 from scipy.special import spherical_jn, spherical_yn
 
 
-@dataclass(frozen=True)
-class Constants:
-    """Numerical and physical constants used in the Bardeen comparison scan."""
+# =============================================================================
+# Global parameters
+# =============================================================================
 
-    mass: float = 1.0
-    ell: int = 2
-    rtol: float = 1.0e-11
-    atol: float = 1.0e-13
-    bvp_tol: float = 1.0e-6
-    max_nodes: int = 50_000
+M = 1.0
+ELL = 2
+RTOL = 1.0e-11
+ATOL = 1.0e-13
 
-    @property
-    def r_s(self) -> float:
-        """Schwarzschild radius for the chosen mass normalization."""
-        return 2.0 * self.mass
+R_S = 2.0 * M
+L_EXT = 4.0 * M / (3.0 * np.sqrt(3.0))
 
-    @property
-    def ell_ext(self) -> float:
-        """Extremal Bardeen regularization length for the chosen mass."""
-        return 4.0 * self.mass / (3.0 * np.sqrt(3.0))
+frac_vals = np.linspace(0.01, 0.99, 20)
+omega_list = [1.0e-4, 2.0e-4]
+
+# Once-and-for-all calibration settings.
+OMEGA_CAL = min(omega_list)
+CHI_CAL = np.linspace(0.45, 0.90, 6)
 
 
-DEFAULTS = Constants()
-
-
-@dataclass(frozen=True)
-class ComparisonResult:
-    """Container for one comparison datum."""
-
-    omega: float
-    chi: float
-    ell_b: float
-    direct_response: float
-    shell_response: float
-
-    @property
-    def difference(self) -> float:
-        """Direct minus shell-EFT response."""
-        return self.direct_response - self.shell_response
-
-
-# -----------------------------------------------------------------------------
+# =============================================================================
 # Bardeen geometry
-# -----------------------------------------------------------------------------
+# =============================================================================
 
-
-def f_bardeen(r: np.ndarray | float, mass: float, ell_b: float) -> np.ndarray | float:
-    """Metric function f(r) for the Bardeen geometry."""
-    r_arr = np.asarray(r, dtype=float)
-    value = 1.0 - 2.0 * mass * r_arr**2 / (r_arr**2 + ell_b**2) ** 1.5
-    return float(value) if np.isscalar(r) else value
-
-
-def dfdr_bardeen(r: np.ndarray | float, mass: float, ell_b: float) -> np.ndarray | float:
-    """Radial derivative of the Bardeen metric function."""
-    r_arr = np.asarray(r, dtype=float)
-    rp2 = r_arr * r_arr + ell_b * ell_b
-    value = -2.0 * mass * (2.0 * r_arr * rp2 ** (-1.5) - 3.0 * r_arr**3 * rp2 ** (-2.5))
-    return float(value) if np.isscalar(r) else value
-
-
-def mass_bardeen(r: np.ndarray | float, mass: float, ell_b: float) -> np.ndarray | float:
-    """Effective mass profile m(r) for the Bardeen geometry."""
-    r_arr = np.asarray(r, dtype=float)
-    value = mass * r_arr**3 / (r_arr**2 + ell_b**2) ** 1.5
-    return float(value) if np.isscalar(r) else value
-
-
-def dm_bardeen(r: np.ndarray | float, mass: float, ell_b: float) -> np.ndarray | float:
-    """Derivative of the Bardeen effective mass profile."""
-    r_arr = np.asarray(r, dtype=float)
-    value = 3.0 * mass * ell_b**2 * r_arr**2 / (r_arr**2 + ell_b**2) ** 2.5
-    return float(value) if np.isscalar(r) else value
-
-
-def get_outer_horizon(mass: float, ell_b: float, *, r_max: float | None = None, grid_size: int = 60_000) -> float:
-    """Find the outer Bardeen horizon by bracketing roots of f(r)."""
-    if r_max is None:
-        r_max = 80.0 * mass
-
-    grid = np.linspace(1.0e-6 * mass, r_max, grid_size)
-    values = f_bardeen(grid, mass, ell_b)
-    crossings = np.where(values[:-1] * values[1:] < 0.0)[0]
-
-    if len(crossings) == 0:
-        raise RuntimeError("No outer horizon found. Check that ell_b is below extremality.")
-
-    index = crossings[-1]
-    a, b = grid[index], grid[index + 1]
-    return float(brentq(lambda x: f_bardeen(x, mass, ell_b), a, b))
-
-
-def _bardeen_derivs_for_bvp(r: np.ndarray | float, mass: float, ell_b: float):
-    """Return f, f', and placeholder NLED derivatives for compatibility with BVP code."""
-    r_in = np.atleast_1d(r).astype(float)
-    f = f_bardeen(r_in, mass, ell_b)
-    fp = dfdr_bardeen(r_in, mass, ell_b)
-    lf = np.zeros_like(r_in)
-    lff = np.zeros_like(r_in)
-
-    if np.isscalar(r):
-        return float(f[0]), float(fp[0]), float(lf[0]), float(lff[0])
-    return f, fp, lf, lff
-
-
-def far_field_slice(r: np.ndarray) -> slice:
-    """Slice selecting the far-field part of a numerical solution for matching."""
-    return slice(int(0.6 * len(r)), -5)
-
-
-def build_bessel_matrix(r_fit: np.ndarray, omega: float, ell: int = 2) -> np.ndarray:
-    """Matrix with spherical Bessel basis columns j_l(omega r), y_l(omega r)."""
-    z = omega * r_fit
-    return np.vstack([spherical_jn(ell, z), spherical_yn(ell, z)]).T
-
-
-# -----------------------------------------------------------------------------
-# Direct test-tensor response
-# -----------------------------------------------------------------------------
-
-
-def solve_dynamic_exact_bc_tensor_bardeen(
+def f_bardeen(
+    r: np.ndarray | float,
     mass: float,
     ell_b: float,
+) -> np.ndarray | float:
+    """Return the Bardeen metric function."""
+    return (
+        1.0
+        - 2.0 * mass * r**2
+        / (r**2 + ell_b**2) ** 1.5
+    )
+
+
+def dfdr_bardeen(
+    r: np.ndarray | float,
+    mass: float,
+    ell_b: float,
+) -> np.ndarray | float:
+    """Return the radial derivative of the Bardeen metric function."""
+    rp2 = r * r + ell_b * ell_b
+    return -2.0 * mass * (
+        2.0 * r * rp2 ** (-1.5)
+        - 3.0 * r**3 * rp2 ** (-2.5)
+    )
+
+
+def mass_bardeen(
+    r: np.ndarray | float,
+    mass: float,
+    ell_b: float,
+) -> np.ndarray | float:
+    """Return the effective Bardeen mass profile."""
+    return (
+        mass * r**3
+        / (r**2 + ell_b**2) ** 1.5
+    )
+
+
+def dm_bardeen(
+    r: np.ndarray | float,
+    mass: float,
+    ell_b: float,
+) -> np.ndarray | float:
+    """Return the derivative of the effective Bardeen mass profile."""
+    return (
+        3.0 * mass * ell_b**2 * r**2
+        / (r**2 + ell_b**2) ** 2.5
+    )
+
+
+def get_outer_horizon(
+    mass: float,
+    ell_b: float,
+) -> float:
+    """Locate the outer Bardeen horizon by bracketing the last sign change."""
+
+    def horizon_function(radius: float) -> float:
+        return f_bardeen(radius, mass, ell_b)
+
+    grid = np.linspace(
+        1.0e-6 * mass,
+        80.0 * mass,
+        60_000,
+    )
+    values = horizon_function(grid)
+    crossings = np.where(
+        values[:-1] * values[1:] < 0.0
+    )[0]
+
+    if len(crossings) == 0:
+        raise RuntimeError("No horizon found.")
+
+    lower = grid[crossings[-1]]
+    upper = grid[crossings[-1] + 1]
+
+    return float(
+        brentq(
+            horizon_function,
+            lower,
+            upper,
+        )
+    )
+
+
+def bardeen_derivs(
+    r: np.ndarray | float,
+    mass: float,
+    ell_b: float,
+) -> tuple[
+    np.ndarray | float,
+    np.ndarray | float,
+    np.ndarray | float,
+    np.ndarray | float,
+]:
+    """
+    Return f, f', and two zero placeholders used by the direct BVP code.
+    """
+    r_in = np.atleast_1d(r).astype(float)
+
+    f_value = f_bardeen(
+        r_in,
+        mass,
+        ell_b,
+    )
+    fp_value = dfdr_bardeen(
+        r_in,
+        mass,
+        ell_b,
+    )
+
+    l_f = np.zeros_like(r_in)
+    l_ff = np.zeros_like(r_in)
+
+    if np.isscalar(r):
+        return (
+            float(f_value[0]),
+            float(fp_value[0]),
+            float(l_f[0]),
+            float(l_ff[0]),
+        )
+
+    return f_value, fp_value, l_f, l_ff
+
+
+def far_field_slice(
+    r: np.ndarray,
+) -> slice:
+    """Return the far-field slice used in the asymptotic response fit."""
+    return slice(
+        int(0.6 * len(r)),
+        -5,
+    )
+
+
+def build_bessel_matrix(
+    r_fit: np.ndarray,
     omega: float,
-    *,
-    constants: Constants = DEFAULTS,
+    L: int = 2,
+) -> np.ndarray:
+    """Return the spherical-Bessel source-response design matrix."""
+    z = omega * r_fit
+    j_value = spherical_jn(L, z)
+    y_value = spherical_yn(L, z)
+
+    return np.vstack(
+        [j_value, y_value]
+    ).T
+
+
+# =============================================================================
+# 1. Direct numerical Bardeen test-tensor response
+# =============================================================================
+
+def solve_dynamic_exact_bc_tensor_bardeen_raw(
+    mass: float,
+    ell_param: float,
+    omega: float,
 ) -> float:
     """
-    Direct BVP extraction of the Bardeen test-tensor dynamical response.
+    Return the raw direct source-response ratio.
 
-    The response follows the normalization convention of the research script: in the
-    low-frequency power-law regime the extracted ratio is divided by 1e9.
+    No fixed ``1e9`` factor is inserted. Conversion to the adopted static
+    convention is determined once by :func:`calibrate_once`.
     """
-    ratio = ell_b / constants.ell_ext
-    r_h = get_outer_horizon(mass, ell_b)
+    ratio = ell_param / L_EXT
+    r_h = get_outer_horizon(
+        mass,
+        ell_param,
+    )
 
     r_min = r_h + 0.5e-4
     r_max = 20.0 + 127.0 * ratio
 
-    ell = constants.ell
-    lam = ell * (ell + 1)
+    l_harm = 2
+    angular_eigenvalue = l_harm * (l_harm + 1)
 
-    def fun(r, y):
-        f, fp, _, _ = _bardeen_derivs_for_bvp(r, mass, ell_b)
-        f = np.maximum(f, 1.0e-7)
+    def radial_system(
+        r: np.ndarray,
+        y: np.ndarray,
+    ) -> np.ndarray:
+        f_value, fp_value, _, _ = bardeen_derivs(
+            r,
+            mass,
+            ell_param,
+        )
+        f_value = np.maximum(
+            f_value,
+            1.0e-7,
+        )
 
-        m = mass_bardeen(r, mass, ell_b)
-        dm_dr = dm_bardeen(r, mass, ell_b)
-        potential = f * (lam / r**2 - 6.0 * m / r**3 + 2.0 * dm_dr / r**2)
+        r_squared = r * r
+        mass_profile = mass_bardeen(
+            r,
+            mass,
+            ell_param,
+        )
+        mass_profile_derivative = dm_bardeen(
+            r,
+            mass,
+            ell_param,
+        )
 
-        coeff = (omega**2 - potential) / f**2
-        fp_over_f = fp / f
+        potential = f_value * (
+            angular_eigenvalue / r_squared
+            - 6.0 * mass_profile / r**3
+            + 2.0 * mass_profile_derivative / r**2
+        )
 
-        re_psi, re_p, im_psi, im_p = y
-        re_pp = -fp_over_f * re_p - coeff * re_psi
-        im_pp = -fp_over_f * im_p - coeff * im_psi
+        coefficient = (
+            omega**2 - potential
+        ) / f_value**2
+        fp_over_f = fp_value / f_value
 
-        return np.vstack((re_p, re_pp, im_p, im_pp))
+        (
+            re_psi,
+            re_psi_prime,
+            im_psi,
+            im_psi_prime,
+        ) = y
 
-    def bc(ya, yb):
-        f_min, _, _, _ = _bardeen_derivs_for_bvp(np.array([r_min]), mass, ell_b)
-        kw = omega / f_min[0]
+        re_psi_double_prime = (
+            -fp_over_f * re_psi_prime
+            - coefficient * re_psi
+        )
+        im_psi_double_prime = (
+            -fp_over_f * im_psi_prime
+            - coefficient * im_psi
+        )
 
-        bc1 = ya[1] - kw * ya[2]
-        bc2 = ya[3] + kw * ya[0]
+        return np.vstack(
+            (
+                re_psi_prime,
+                re_psi_double_prime,
+                im_psi_prime,
+                im_psi_double_prime,
+            )
+        )
+
+    def boundary_conditions(
+        y_inner: np.ndarray,
+        y_outer: np.ndarray,
+    ) -> np.ndarray:
+        f_min, _, _, _ = bardeen_derivs(
+            np.array([r_min]),
+            mass,
+            ell_param,
+        )
+        k_omega = omega / f_min[0]
+
+        bc_1 = (
+            y_inner[1]
+            - k_omega * y_inner[2]
+        )
+        bc_2 = (
+            y_inner[3]
+            + k_omega * y_inner[0]
+        )
 
         z_inf = omega * r_max
-        y_val = spherical_yn(ell, z_inf)
-        yp_val = spherical_yn(ell, z_inf, derivative=True)
-        target = 1.0 / (omega * r_max**2)
+        y_value = spherical_yn(
+            l_harm,
+            z_inf,
+        )
+        y_prime_value = spherical_yn(
+            l_harm,
+            z_inf,
+            derivative=True,
+        )
+        target = (
+            1.0
+            / (omega * r_max**2)
+        )
 
-        bc3 = omega * yp_val * yb[0] - y_val * yb[1] - target
-        bc4 = omega * yp_val * yb[2] - y_val * yb[3]
+        bc_3 = (
+            omega * y_prime_value * y_outer[0]
+            - y_value * y_outer[1]
+            - target
+        )
+        bc_4 = (
+            omega * y_prime_value * y_outer[2]
+            - y_value * y_outer[3]
+        )
 
-        return np.array([bc1, bc2, bc3, bc4])
+        return np.array(
+            [bc_1, bc_2, bc_3, bc_4]
+        )
 
-    x_init = np.linspace(r_min, r_max, 2000)
-    y_init = np.zeros((4, x_init.size))
-    y_init[0] = spherical_jn(ell, omega * x_init)
+    x_initial = np.linspace(
+        r_min,
+        r_max,
+        2_000,
+    )
+    y_initial = np.zeros(
+        (4, x_initial.size)
+    )
+    z_initial = omega * x_initial
+    y_initial[0] = spherical_jn(
+        l_harm,
+        z_initial,
+    )
 
-    result = solve_bvp(fun, bc, x_init, y_init, tol=constants.bvp_tol, max_nodes=constants.max_nodes)
+    result = solve_bvp(
+        radial_system,
+        boundary_conditions,
+        x_initial,
+        y_initial,
+        tol=1.0e-6,
+        max_nodes=50_000,
+    )
+
     if not result.success:
         return np.nan
 
-    sl = far_field_slice(result.x)
-    r_fit = result.x[sl]
-    psi_complex = result.y[0][sl] + 1j * result.y[2][sl]
-    z_max = omega * np.max(r_fit)
+    fit_slice = far_field_slice(
+        result.x
+    )
+    r_fit = result.x[fit_slice]
+    psi_complex = (
+        result.y[0][fit_slice]
+        + 1j * result.y[2][fit_slice]
+    )
+
+    z_max = omega * np.max(
+        r_fit
+    )
 
     if z_max < 0.1:
-        source = r_fit**ell
-        response = r_fit ** (-(ell + 1))
-        matrix = np.vstack([source, response]).T
-        coeffs = lstsq(matrix, np.real(psi_complex), lapack_driver="gelsy")[0]
-        c_tidal, c_resp = coeffs
+        source_column = r_fit**l_harm
+        response_column = r_fit ** (-(l_harm + 1))
+        design_matrix = np.vstack(
+            [source_column, response_column]
+        ).T
+
+        coefficients = lstsq(
+            design_matrix,
+            np.real(psi_complex),
+            lapack_driver="gelsy",
+        )[0]
+
+        c_tidal = coefficients[0]
+        c_response = coefficients[1]
+
         if abs(c_tidal) < 1.0e-20:
             return 0.0
-        return float(-c_resp / (1.0e9 * c_tidal))
 
-    matrix = build_bessel_matrix(r_fit, omega, ell=ell)
-    coeffs = lstsq(matrix, psi_complex, lapack_driver="gelsy")[0]
-    a_cplx, b_cplx = coeffs
-    alpha_cplx = 45.0 * (b_cplx / a_cplx) / omega**5
-    return float(np.real(alpha_cplx))
+        return float(
+            -c_response / c_tidal
+        )
+
+    design_matrix = build_bessel_matrix(
+        r_fit,
+        omega,
+        L=l_harm,
+    )
+    coefficients = lstsq(
+        design_matrix,
+        psi_complex,
+        lapack_driver="gelsy",
+    )[0]
+
+    a_complex = coefficients[0]
+    b_complex = coefficients[1]
+    response_ratio = (
+        b_complex / a_complex
+    )
+    alpha_complex = (
+        45.0
+        * response_ratio
+        / omega**5
+    )
+
+    return float(
+        np.real(alpha_complex)
+    )
 
 
-# -----------------------------------------------------------------------------
-# Shell-EFT response
-# -----------------------------------------------------------------------------
+# =============================================================================
+# 2. Scalar Shell-EFT proxy
+# =============================================================================
+
+def V_RW_scalar(
+    r: float,
+    mass: float,
+    ell_b: float,
+    ell: int,
+) -> float:
+    """Return the scalar Regge-Wheeler potential."""
+    f_value = f_bardeen(
+        r,
+        mass,
+        ell_b,
+    )
+    fp_value = dfdr_bardeen(
+        r,
+        mass,
+        ell_b,
+    )
+
+    return f_value * (
+        ell * (ell + 1) / r**2
+        + fp_value / r
+    )
 
 
-def v_rw_scalar(r: float, mass: float, ell_b: float, ell: int) -> float:
-    """Regge--Wheeler-type potential used in the shell-EFT probe calculation."""
-    f = f_bardeen(r, mass, ell_b)
-    fp = dfdr_bardeen(r, mass, ell_b)
-    return float(f * (ell * (ell + 1) / r**2 + fp / r))
+def rhs_RW_dynamic(
+    r: float,
+    y: np.ndarray,
+    omega: float,
+    mass: float,
+    ell_b: float,
+    ell: int,
+) -> list[complex]:
+    """Return the first-order scalar radial system."""
+    psi, momentum = y
+
+    f_value = f_bardeen(
+        r,
+        mass,
+        ell_b,
+    )
+    potential = V_RW_scalar(
+        r,
+        mass,
+        ell_b,
+        ell,
+    )
+
+    if abs(f_value) < 1.0e-16:
+        f_value = (
+            np.sign(f_value)
+            * 1.0e-16
+        )
+
+    dpsi_dr = (
+        momentum / f_value
+    )
+    dmomentum_dr = (
+        (potential - omega**2)
+        * psi
+        / f_value
+    )
+
+    return [
+        dpsi_dr,
+        dmomentum_dr,
+    ]
 
 
-def rhs_rw_dynamic(r: float, y: Iterable[float], omega: float, mass: float, ell_b: float, ell: int):
-    """First-order dynamic Regge--Wheeler system in r coordinates."""
-    psi, p = y
-    f = f_bardeen(r, mass, ell_b)
-    potential = v_rw_scalar(r, mass, ell_b, ell)
-
-    if abs(f) < 1.0e-16:
-        f = np.sign(f) * 1.0e-16
-
-    return [p / f, ((potential - omega**2) * psi) / f]
-
-
-def solve_outside_rw_dynamic(
+def solve_outside_RW_dynamic(
     omega: float,
     mass: float,
     ell_b: float,
     ell: int,
     r_shell: float,
-    *,
     eps: float = 1.0e-6,
-    constants: Constants = DEFAULTS,
 ) -> tuple[complex, complex]:
-    """Integrate the exterior shell-EFT Regge--Wheeler problem to the shell radius."""
-    r_h = get_outer_horizon(mass, ell_b)
-    r0 = r_h * (1.0 + eps)
-
-    psi0 = 1.0 + 0.0j
-    p0 = -1j * omega * psi0
-
-    sol_re = solve_ivp(
-        fun=lambda r, y: rhs_rw_dynamic(r, y, omega, mass, ell_b, ell),
-        t_span=(r0, r_shell),
-        y0=[psi0.real, p0.real],
-        method="DOP853",
-        rtol=constants.rtol,
-        atol=constants.atol,
+    """Integrate the exterior scalar solution from the horizon to the shell."""
+    r_h = get_outer_horizon(
+        mass,
+        ell_b,
     )
-    sol_im = solve_ivp(
-        fun=lambda r, y: rhs_rw_dynamic(r, y, omega, mass, ell_b, ell),
-        t_span=(r0, r_shell),
-        y0=[psi0.imag, p0.imag],
-        method="DOP853",
-        rtol=constants.rtol,
-        atol=constants.atol,
+    r_0 = r_h * (
+        1.0 + eps
     )
 
-    if not sol_re.success or not sol_im.success:
-        raise RuntimeError("Outside dynamic integration failed.")
+    psi_0 = 1.0 + 0.0j
+    momentum_0 = (
+        -1j * omega * psi_0
+    )
 
-    psi_r = sol_re.y[0, -1] + 1j * sol_im.y[0, -1]
-    p_r = sol_re.y[1, -1] + 1j * sol_im.y[1, -1]
-    dpsi_dr_r = p_r / f_bardeen(r_shell, mass, ell_b)
-    return psi_r, dpsi_dr_r
+    real_solution = solve_ivp(
+        fun=lambda r, y: rhs_RW_dynamic(
+            r,
+            y,
+            omega,
+            mass,
+            ell_b,
+            ell,
+        ),
+        t_span=(r_0, r_shell),
+        y0=[
+            psi_0.real,
+            momentum_0.real,
+        ],
+        method="DOP853",
+        rtol=RTOL,
+        atol=ATOL,
+    )
+
+    imaginary_solution = solve_ivp(
+        fun=lambda r, y: rhs_RW_dynamic(
+            r,
+            y,
+            omega,
+            mass,
+            ell_b,
+            ell,
+        ),
+        t_span=(r_0, r_shell),
+        y0=[
+            psi_0.imag,
+            momentum_0.imag,
+        ],
+        method="DOP853",
+        rtol=RTOL,
+        atol=ATOL,
+    )
+
+    if (
+        not real_solution.success
+        or not imaginary_solution.success
+    ):
+        raise RuntimeError(
+            "Outside dynamic integration failed."
+        )
+
+    psi_at_shell = (
+        real_solution.y[0, -1]
+        + 1j * imaginary_solution.y[0, -1]
+    )
+    momentum_at_shell = (
+        real_solution.y[1, -1]
+        + 1j * imaginary_solution.y[1, -1]
+    )
+
+    f_at_shell = f_bardeen(
+        r_shell,
+        mass,
+        ell_b,
+    )
+    dpsi_dr_at_shell = (
+        momentum_at_shell
+        / f_at_shell
+    )
+
+    return (
+        psi_at_shell,
+        dpsi_dr_at_shell,
+    )
 
 
-def psi_inside_rw_dynamic(r_shell: float, omega: float, mass: float, ell_b: float, ell: int) -> tuple[float, float]:
-    """Regular flat interior shell solution and radial derivative at the shell."""
-    f_r = f_bardeen(r_shell, mass, ell_b)
-    if f_r <= 0.0:
-        raise ValueError("Shell must be outside the horizon: f(R)>0.")
+def psi_inside_RW_dynamic(
+    r_shell: float,
+    omega: float,
+    mass: float,
+    ell_b: float,
+    ell: int,
+) -> tuple[float, float]:
+    """Return the regular interior solution and derivative at the shell."""
+    f_at_shell = f_bardeen(
+        r_shell,
+        mass,
+        ell_b,
+    )
 
-    sqrt_f = np.sqrt(f_r)
-    r_tilde = r_shell / sqrt_f
-    omega_tilde = omega / sqrt_f
-    x = omega_tilde * r_tilde
+    if f_at_shell <= 0:
+        raise ValueError(
+            "Shell must be outside horizon: f(R)>0"
+        )
 
-    j_l = spherical_jn(ell, x)
-    dj_l_dx = spherical_jn(ell, x, derivative=True)
+    sqrt_f = np.sqrt(
+        f_at_shell
+    )
+    r_tilde = (
+        r_shell / sqrt_f
+    )
+    omega_tilde = (
+        omega / sqrt_f
+    )
 
-    psi_in = r_tilde * j_l
-    dpsi_dr_tilde = j_l + r_tilde * dj_l_dx * omega_tilde
-    dpsi_dr_in = dpsi_dr_tilde / sqrt_f
-    return float(psi_in), float(dpsi_dr_in)
+    argument = (
+        omega_tilde * r_tilde
+    )
+
+    j_value = spherical_jn(
+        ell,
+        argument,
+    )
+    j_prime_value = spherical_jn(
+        ell,
+        argument,
+        derivative=True,
+    )
+
+    psi_inside = (
+        r_tilde * j_value
+    )
+    dpsi_dr_tilde = (
+        j_value
+        + r_tilde
+        * j_prime_value
+        * omega_tilde
+    )
+    dpsi_dr_inside = (
+        dpsi_dr_tilde / sqrt_f
+    )
+
+    return (
+        psi_inside,
+        dpsi_dr_inside,
+    )
 
 
-def f_shell_rw_dynamic(omega: float, mass: float, ell_b: float, ell: int, r_shell: float) -> complex:
-    """Finite-radius shell response before running/finite-part fitting."""
-    psi_out, dpsi_out = solve_outside_rw_dynamic(omega, mass, ell_b, ell, r_shell)
-    psi_in, dpsi_in = psi_inside_rw_dynamic(r_shell, omega, mass, ell_b, ell)
+def F_shell_RW_dynamic(
+    omega: float,
+    mass: float,
+    ell_b: float,
+    ell: int,
+    r_shell: float,
+) -> complex:
+    """Return the finite-radius scalar shell response."""
+    (
+        psi_outside,
+        dpsi_dr_outside,
+    ) = solve_outside_RW_dynamic(
+        omega,
+        mass,
+        ell_b,
+        ell,
+        r_shell,
+    )
 
-    scale = psi_in / psi_out
-    dpsi_out *= scale
+    (
+        psi_inside,
+        dpsi_dr_inside,
+    ) = psi_inside_RW_dynamic(
+        r_shell,
+        omega,
+        mass,
+        ell_b,
+        ell,
+    )
 
-    jump = dpsi_in - dpsi_out
-    f_r = f_bardeen(r_shell, mass, ell_b)
+    matching_scale = (
+        psi_inside / psi_outside
+    )
+    dpsi_dr_outside *= matching_scale
 
-    pref = 4.0 * np.pi * factorial(ell) * (2.0**ell) * r_shell ** (2 * ell + 2) / factorial(2 * ell + 1)
-    pref *= np.sqrt(f_r) ** (2 * ell + 1)
-    return pref * (jump / psi_in)
+    derivative_jump = (
+        dpsi_dr_inside
+        - dpsi_dr_outside
+    )
+    f_at_shell = f_bardeen(
+        r_shell,
+        mass,
+        ell_b,
+    )
+
+    prefactor = (
+        4.0
+        * np.pi
+        * factorial(ell)
+        * 2.0**ell
+        * r_shell ** (2 * ell + 2)
+        / factorial(2 * ell + 1)
+    )
+    prefactor *= (
+        np.sqrt(f_at_shell)
+        ** (2 * ell + 1)
+    )
+
+    return prefactor * (
+        derivative_jump / psi_inside
+    )
 
 
-def make_r_list(chi: float, mass: float, n_r: int = 13) -> np.ndarray:
-    """Shell-radius list used to fit the finite-radius shell response."""
-    r_min = 6.0 * mass
-    r_max = r_min + 160.0 * chi**2
-    return np.linspace(r_min, r_max, n_r)
+def make_R_list(
+    chi: float,
+    ell_b: float,
+    nR: int = 13,
+) -> np.ndarray:
+    """Return the shell-radius grid used in the running fit."""
+    del ell_b
+
+    r_min = 6.0 * M
+    r_max = (
+        r_min
+        + 160.0 * chi**2
+    )
+
+    return np.linspace(
+        r_min,
+        r_max,
+        nR,
+    )
 
 
 def fit_delta_running_dynamic(
     omega: float,
     ell_b: float,
-    r_list: np.ndarray,
-    *,
-    constants: Constants = DEFAULTS,
+    r_list_local: np.ndarray,
     ridge: float = 1.0e-26,
 ) -> tuple[complex, complex]:
-    """Fit the Bardeen-minus-Schwarzschild shell response to log and power terms."""
-    mass = constants.mass
-    ell = constants.ell
-    log_x = np.log(constants.r_s / r_list)
-    x1 = constants.r_s / r_list
-    x2 = x1**2
-    x3 = x1**3
+    """Fit the logarithmic and finite shell-response coefficients."""
+    log_x = np.log(
+        R_S / r_list_local
+    )
+    x_1 = (
+        R_S / r_list_local
+    )
+    x_2 = x_1**2
+    x_3 = x_1**3
 
-    f_b = np.array([f_shell_rw_dynamic(omega, mass, ell_b, ell, r) for r in r_list], dtype=complex)
-    f_s = np.array([f_shell_rw_dynamic(omega, mass, 0.0, ell, r) for r in r_list], dtype=complex)
-    delta_f = f_b - f_s
-
-    design = np.vstack([log_x, np.ones_like(log_x), x1, x2, x3]).T
-
-    def ridge_solve(y):
-        xtx = design.T @ design
-        xty = design.T @ y
-        return np.linalg.solve(xtx + ridge * np.eye(design.shape[1]), xty)
-
-    params_re = ridge_solve(delta_f.real)
-    params_im = ridge_solve(delta_f.imag)
-
-    d_a = params_re[0] + 1j * params_im[0]
-    d_b = params_re[1] + 1j * params_im[1]
-    return d_a, d_b
-
-
-def bar_f_from_dadb(d_a: complex, d_b: complex, *, normalization: float = 0.8 / 1.0e3) -> complex:
-    """Convert fitted log/finite parts to the plotted shell response convention."""
-    beta = 0.0  # retained explicitly for future scheme variations
-    return normalization * (d_b + beta * d_a)
-
-
-def solve_shell_barF_bardeen(mass: float, ell_b: float, omega: float, *, constants: Constants = DEFAULTS) -> float:
-    """Compute the renormalized shell-EFT response in the script's normalization."""
-    chi = ell_b / constants.ell_ext
-    r_list = make_r_list(chi, mass, n_r=13)
-    d_a, d_b = fit_delta_running_dynamic(omega, ell_b, r_list, constants=constants, ridge=1.0e-26)
-    return float(np.real(bar_f_from_dadb(d_a, d_b)))
-
-
-# -----------------------------------------------------------------------------
-# Scan/plot utilities
-# -----------------------------------------------------------------------------
-
-
-def run_comparison(
-    chi_values: Iterable[float],
-    omega_values: Iterable[float],
-    *,
-    constants: Constants = DEFAULTS,
-) -> pd.DataFrame:
-    """Run the direct-vs-shell comparison scan and return a tidy DataFrame."""
-    rows: list[ComparisonResult] = []
-    mass = constants.mass
-
-    for omega in omega_values:
-        for chi in chi_values:
-            ell_b = chi * constants.ell_ext
-            try:
-                direct = solve_dynamic_exact_bc_tensor_bardeen(mass, ell_b, omega, constants=constants)
-            except Exception:
-                direct = np.nan
-            try:
-                shell = solve_shell_barF_bardeen(mass, ell_b, omega, constants=constants)
-            except Exception:
-                shell = np.nan
-
-            rows.append(ComparisonResult(omega, chi, ell_b, direct, shell))
-
-    return pd.DataFrame(
+    f_bardeen_values = np.array(
         [
-            {
-                "omega": row.omega,
-                "chi": row.chi,
-                "ell_b": row.ell_b,
-                "direct_response": row.direct_response,
-                "shell_response": row.shell_response,
-                "difference": row.difference,
-            }
-            for row in rows
+            F_shell_RW_dynamic(
+                omega,
+                M,
+                ell_b,
+                ELL,
+                radius,
+            )
+            for radius in r_list_local
+        ],
+        dtype=complex,
+    )
+
+    f_schwarzschild_values = np.array(
+        [
+            F_shell_RW_dynamic(
+                omega,
+                M,
+                0.0,
+                ELL,
+                radius,
+            )
+            for radius in r_list_local
+        ],
+        dtype=complex,
+    )
+
+    delta_f = (
+        f_bardeen_values
+        - f_schwarzschild_values
+    )
+
+    design_matrix = np.vstack(
+        [
+            log_x,
+            np.ones_like(log_x),
+            x_1,
+            x_2,
+            x_3,
         ]
+    ).T
+
+    def ridge_solve(
+        data: np.ndarray,
+    ) -> np.ndarray:
+        normal_matrix = (
+            design_matrix.T
+            @ design_matrix
+        )
+        normal_vector = (
+            design_matrix.T
+            @ data
+        )
+
+        return np.linalg.solve(
+            normal_matrix
+            + ridge
+            * np.eye(
+                design_matrix.shape[1]
+            ),
+            normal_vector,
+        )
+
+    parameters_real = ridge_solve(
+        delta_f.real
+    )
+    parameters_imaginary = ridge_solve(
+        delta_f.imag
+    )
+
+    delta_a = (
+        parameters_real[0]
+        + 1j * parameters_imaginary[0]
+    )
+    delta_b = (
+        parameters_real[1]
+        + 1j * parameters_imaginary[1]
+    )
+
+    return delta_a, delta_b
+
+
+def shell_scalar_response_raw(
+    delta_a: complex,
+    delta_b: complex,
+    ell: int = ELL,
+) -> complex:
+    """
+    Return the finite scalar Shell-EFT coefficient in the chosen scheme.
+
+    ``beta = 0`` defines the selected finite-part convention. The factor
+    ``3/(4*pi)`` is the fixed quadrupolar shell-response convention.
+    """
+    del ell
+
+    beta = 0.0
+
+    return (
+        3.0 / (4.0 * np.pi)
+    ) * (
+        delta_b
+        + beta * delta_a
     )
 
 
-def save_comparison_plot(df: pd.DataFrame, output_path: str | Path) -> Path:
-    """Save a publication-style comparison plot from a scan DataFrame."""
-    import matplotlib.pyplot as plt
+def solve_shell_proxy_raw(
+    mass: float,
+    ell_b: float,
+    omega: float,
+) -> float:
+    """Return the raw scalar Shell-EFT proxy response."""
+    del mass
 
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    chi = ell_b / L_EXT
+    r_list_local = make_R_list(
+        chi,
+        ell_b,
+        nR=13,
+    )
 
-    plt.figure(figsize=(9.2, 6.5))
+    delta_a, delta_b = fit_delta_running_dynamic(
+        omega,
+        ell_b,
+        r_list_local,
+        ridge=1.0e-26,
+    )
 
-    for omega, sub in df.groupby("omega"):
-        sub = sub.sort_values("chi")
-        chi = sub["chi"].to_numpy(dtype=float)
-        direct = sub["direct_response"].to_numpy(dtype=float)
-        shell = sub["shell_response"].to_numpy(dtype=float)
+    return float(
+        np.real(
+            shell_scalar_response_raw(
+                delta_a,
+                delta_b,
+                ell=ELL,
+            )
+        )
+    )
 
-        mask_d = np.isfinite(direct)
-        mask_s = np.isfinite(shell)
 
-        if np.sum(mask_d) > 3:
-            x_smooth = np.linspace(chi[mask_d].min(), chi[mask_d].max(), 300)
-            y_smooth = UnivariateSpline(chi[mask_d], direct[mask_d], s=0)(x_smooth)
-            plt.plot(x_smooth, y_smooth, lw=2.0, label=rf"Direct test tensor, $\omega={omega}$")
+# =============================================================================
+# 3. Once-and-for-all calibration
+# =============================================================================
+
+def coviello_static_bardeen(
+    mass: float,
+    ell_b: float,
+) -> float:
+    """
+    Return the leading small-deformation s=l=2 benchmark.
+
+    Lambda = (42/5) M ell_b^4.
+    """
+    return (
+        42.0 / 5.0
+    ) * mass * ell_b**4
+
+
+def through_origin_factor(
+    raw_values: np.ndarray,
+    target_values: np.ndarray,
+) -> float:
+    """Return the least-squares scale factor for a fit through the origin."""
+    raw_array = np.asarray(
+        raw_values,
+        dtype=float,
+    )
+    target_array = np.asarray(
+        target_values,
+        dtype=float,
+    )
+
+    finite_mask = (
+        np.isfinite(raw_array)
+        & np.isfinite(target_array)
+    )
+
+    raw_array = raw_array[
+        finite_mask
+    ]
+    target_array = target_array[
+        finite_mask
+    ]
+
+    denominator = np.dot(
+        raw_array,
+        raw_array,
+    )
+
+    if denominator <= 0.0:
+        raise RuntimeError(
+            "Cannot determine calibration factor."
+        )
+
+    return float(
+        np.dot(
+            raw_array,
+            target_array,
+        )
+        / denominator
+    )
+
+
+def relative_rms(
+    model: np.ndarray,
+    target: np.ndarray,
+) -> float:
+    """Return the RMS residual normalized by the RMS target amplitude."""
+    model_array = np.asarray(
+        model,
+        dtype=float,
+    )
+    target_array = np.asarray(
+        target,
+        dtype=float,
+    )
+
+    scale = max(
+        np.sqrt(
+            np.mean(
+                target_array**2
+            )
+        ),
+        1.0e-30,
+    )
+
+    return float(
+        np.sqrt(
+            np.mean(
+                (
+                    model_array
+                    - target_array
+                ) ** 2
+            )
+        )
+        / scale
+    )
+
+
+def calibrate_once() -> tuple[float, float]:
+    """
+    Determine the direct and scalar-proxy conversion constants once.
+
+    The same constants are subsequently used for every deformation
+    parameter and every frequency.
+    """
+    raw_numerical_values = []
+    raw_shell_values = []
+    target_values = []
+
+    print(
+        "\nComputing once-and-for-all calibration..."
+    )
+    print(
+        f"omega_cal = {OMEGA_CAL:.3e}"
+    )
+
+    for chi in CHI_CAL:
+        ell_b = chi * L_EXT
+
+        raw_numerical_values.append(
+            solve_dynamic_exact_bc_tensor_bardeen_raw(
+                M,
+                ell_b,
+                OMEGA_CAL,
+            )
+        )
+
+        raw_shell_values.append(
+            solve_shell_proxy_raw(
+                M,
+                ell_b,
+                OMEGA_CAL,
+            )
+        )
+
+        target_values.append(
+            coviello_static_bardeen(
+                M,
+                ell_b,
+            )
+        )
+
+    raw_numerical_array = np.asarray(
+        raw_numerical_values,
+        dtype=float,
+    )
+    raw_shell_array = np.asarray(
+        raw_shell_values,
+        dtype=float,
+    )
+    target_array = np.asarray(
+        target_values,
+        dtype=float,
+    )
+
+    z_numerical = through_origin_factor(
+        raw_numerical_array,
+        target_array,
+    )
+    z_proxy = through_origin_factor(
+        raw_shell_array,
+        target_array,
+    )
+
+    numerical_residual = relative_rms(
+        z_numerical
+        * raw_numerical_array,
+        target_array,
+    )
+    proxy_residual = relative_rms(
+        z_proxy
+        * raw_shell_array,
+        target_array,
+    )
+
+    print(
+        f"Z_NUM   = {z_numerical:.12e}"
+    )
+    print(
+        f"Z_PROXY = {z_proxy:.12e}"
+    )
+    print(
+        "Direct calibration relative RMS residual "
+        f"= {numerical_residual:.3e}"
+    )
+    print(
+        "Scalar-proxy calibration relative RMS residual "
+        f"= {proxy_residual:.3e}"
+    )
+
+    return z_numerical, z_proxy
+
+
+# =============================================================================
+# 4. Frequency and deformation scan
+# =============================================================================
+
+def run_comparison() -> None:
+    """Run the calibrated comparison and display the final plot."""
+    z_numerical, z_proxy = calibrate_once()
+
+    plt.figure(
+        figsize=(9.2, 6.5)
+    )
+
+    print(
+        "\nBardeen comparison: calibrated direct tensor "
+        "vs once-calibrated scalar Shell-EFT proxy"
+    )
+    print(
+        "=" * 100
+    )
+
+    for omega in omega_list:
+        print(
+            f"\n### omega = {omega:.3e} ###"
+        )
+        print(
+            f"{'chi':<10} | "
+            f"{'direct':<18} | "
+            f"{'shell proxy':<18} | "
+            f"{'diff':<18}"
+        )
+        print(
+            "-" * 78
+        )
+
+        direct_values = []
+        shell_values = []
+
+        for chi in frac_vals:
+            ell_b = chi * L_EXT
+
+            try:
+                direct_raw = (
+                    solve_dynamic_exact_bc_tensor_bardeen_raw(
+                        M,
+                        ell_b,
+                        omega,
+                    )
+                )
+                direct_response = (
+                    z_numerical
+                    * direct_raw
+                )
+            except Exception as exc:
+                direct_response = np.nan
+                print(
+                    f"direct error at chi={chi:.3f}: "
+                    f"{exc}"
+                )
+
+            try:
+                shell_raw = solve_shell_proxy_raw(
+                    M,
+                    ell_b,
+                    omega,
+                )
+                shell_response = (
+                    z_proxy
+                    * shell_raw
+                )
+            except Exception as exc:
+                shell_response = np.nan
+                print(
+                    f"shell error at chi={chi:.3f}: "
+                    f"{exc}"
+                )
+
+            direct_values.append(
+                direct_response
+            )
+            shell_values.append(
+                shell_response
+            )
+
+            print(
+                f"{chi:<10.3f} | "
+                f"{direct_response:<18.8e} | "
+                f"{shell_response:<18.8e} | "
+                f"{(direct_response-shell_response):<18.8e}"
+            )
+
+        direct_array = np.asarray(
+            direct_values,
+            dtype=float,
+        )
+        shell_array = np.asarray(
+            shell_values,
+            dtype=float,
+        )
+
+        direct_mask = np.isfinite(
+            direct_array
+        )
+        shell_mask = np.isfinite(
+            shell_array
+        )
+
+        if np.sum(direct_mask) > 3:
+            x_smooth = np.linspace(
+                frac_vals[direct_mask].min(),
+                frac_vals[direct_mask].max(),
+                300,
+            )
+            direct_spline = UnivariateSpline(
+                frac_vals[direct_mask],
+                direct_array[direct_mask],
+                s=0,
+            )(x_smooth)
+
+            plt.plot(
+                x_smooth,
+                direct_spline,
+                lw=2.0,
+                label=(
+                    rf"Direct tensor, "
+                    rf"$\omega={omega}$"
+                ),
+            )
         else:
-            plt.plot(chi, direct, "o-", label=rf"Direct, $\omega={omega}$")
+            plt.plot(
+                frac_vals,
+                direct_array,
+                "o-",
+                label=(
+                    rf"Direct, "
+                    rf"$\omega={omega}$"
+                ),
+            )
 
-        if np.sum(mask_s) > 3:
-            x_smooth = np.linspace(chi[mask_s].min(), chi[mask_s].max(), 300)
-            y_smooth = UnivariateSpline(chi[mask_s], shell[mask_s], s=0)(x_smooth)
-            plt.plot(x_smooth, y_smooth, "--", lw=2.2, label=rf"Shell EFT, $\omega={omega}$")
+        if np.sum(shell_mask) > 3:
+            x_smooth = np.linspace(
+                frac_vals[shell_mask].min(),
+                frac_vals[shell_mask].max(),
+                300,
+            )
+            shell_spline = UnivariateSpline(
+                frac_vals[shell_mask],
+                shell_array[shell_mask],
+                s=0,
+            )(x_smooth)
+
+            plt.plot(
+                x_smooth,
+                shell_spline,
+                "--",
+                lw=2.2,
+                label=(
+                    rf"Scalar Shell-EFT proxy, "
+                    rf"$\omega={omega}$"
+                ),
+            )
         else:
-            plt.plot(chi, shell, "s--", label=rf"Shell, $\omega={omega}$")
+            plt.plot(
+                frac_vals,
+                shell_array,
+                "s--",
+                label=(
+                    rf"Shell proxy, "
+                    rf"$\omega={omega}$"
+                ),
+            )
 
-    plt.xlabel(r"$\ell_B/\ell_{\rm ext}$", fontsize=22)
-    plt.ylabel(r"Response", fontsize=22)
-    plt.title(r"Bardeen: direct test tensor vs shell EFT response", fontsize=16)
-    plt.grid(True, alpha=0.35)
-    plt.legend(fontsize=14)
-    plt.tick_params(axis="both", which="major", labelsize=16)
+    plt.xlabel(
+        r"$\ell_B/\ell_{\rm ext}$",
+        fontsize=22,
+    )
+    plt.ylabel(
+        r"Response",
+        fontsize=22,
+    )
+    plt.title(
+        "Bardeen: direct tensor vs scalar Shell-EFT proxy",
+        fontsize=16,
+    )
+    plt.grid(
+        True,
+        alpha=0.35,
+    )
+    plt.legend(
+        fontsize=15,
+    )
+    plt.tick_params(
+        axis="both",
+        which="major",
+        labelsize=16,
+    )
     plt.tight_layout()
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    return output_path
+    plt.show()
 
 
-# -----------------------------------------------------------------------------
-# Command-line interface
-# -----------------------------------------------------------------------------
-
-import argparse
-
-
-def _parse_float_list(text: str) -> list[float]:
-    """Parse a comma-separated list of floating-point values."""
-    return [float(item.strip()) for item in text.split(",") if item.strip()]
-
-
-def build_parser() -> argparse.ArgumentParser:
-    """Build the command-line parser."""
-    parser = argparse.ArgumentParser(
-        description="Run Bardeen direct test-tensor vs shell-EFT response comparison scans."
-    )
-    parser.add_argument("--mass", type=float, default=1.0, help="Black-hole mass normalization. Default: 1.0")
-    parser.add_argument("--ell", type=int, default=2, help="Multipole number. Default: 2")
-    parser.add_argument(
-        "--chi-min",
-        type=float,
-        default=0.01,
-        help="Minimum chi = ell_B/ell_ext for the scan. Default: 0.01",
-    )
-    parser.add_argument(
-        "--chi-max",
-        type=float,
-        default=0.99,
-        help="Maximum chi = ell_B/ell_ext for the scan. Default: 0.99",
-    )
-    parser.add_argument(
-        "--n-chi",
-        type=int,
-        default=20,
-        help="Number of chi values. Default: 20",
-    )
-    parser.add_argument(
-        "--omega",
-        type=str,
-        default="1e-4,2e-4",
-        help="Comma-separated frequency list. Default: 1e-4,2e-4",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("outputs"),
-        help="Directory for CSV and figure output. Default: outputs",
-    )
-    parser.add_argument(
-        "--no-plot",
-        action="store_true",
-        help="Save only the CSV file and skip figure generation.",
-    )
-    return parser
-
-
-def main(argv: list[str] | None = None) -> int:
-    """Command-line entry point."""
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
-    constants = Constants(mass=args.mass, ell=args.ell)
-    chi_values = np.linspace(args.chi_min, args.chi_max, args.n_chi)
-    omega_values = _parse_float_list(args.omega)
-
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-
-    df = run_comparison(chi_values, omega_values, constants=constants)
-    csv_path = args.output_dir / "bardeen_shell_eft_comparison.csv"
-    df.to_csv(csv_path, index=False)
-    print(f"Saved data: {csv_path}")
-
-    if not args.no_plot:
-        fig_path = args.output_dir / "bardeen_shell_eft_comparison.png"
-        save_comparison_plot(df, fig_path)
-        print(f"Saved figure: {fig_path}")
-
+def main() -> int:
+    """Execute the Bardeen comparison."""
+    run_comparison()
     return 0
 
 
