@@ -13,6 +13,9 @@ The repository is intentionally focused on the Bardeen-sector numerical calculat
 
  3. `bardeen_axial_dynamic_tln.py`  
    Computes frequency-dependent quadrupolar tidal Love-number scans (axial sector) for the Bardeen regular black hole using the coupled boundary-value problem, ingoing-wave boundary conditions, and hybrid far-field extraction.
+
+4. `bardeen_tensor_shell_eft_matched.py`
+   Provides the tensor-potential counterpart of the scalar shell-EFT proxy calculation. Unlike the scalar-proxy script, the shell-EFT side here uses the full spin-2 Regge–Wheeler potential and is matched directly against the test-tensor perturbation. Both implementations produce consistent low-frequency response curves under the adopted common normalization and subtraction scheme, providing an independent numerical cross-check of the shell-EFT matching.
   
 
 The paper also discusses Hayward and Fan--Wang geometries and additional coupled-response sectors. Those computations can be implemented analogously by replacing the Bardeen metric functions and matter-sector coefficients with the corresponding background quantities.
