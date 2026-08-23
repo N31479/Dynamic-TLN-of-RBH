@@ -3572,7 +3572,7 @@
       "stage_script": "codes/tensor_probe_response.py",
       "code_sha256": {
         "run_all.py": "feeacf61994e47ec43162fb66babc19028e173288945edcaf9b2e9affd490b81",
-        "codes/tensor_probe_response.py": "063ca04113ee8b9d743831196377baf84ae339e2dc5bcea16f06a3a9586273a0",
+        "codes/tensor_probe_response.py": "06c1c26eb8fbf865cdc13c98a5848a9738da3dfef9305729322037de0ec0b861",
         "codes/einstein_nled_master.py": "66d34281be36017c6118128771a9821b36e9e57c134f7202c067861833f9969a"
       },
       "parameters": {
@@ -3581,6 +3581,7 @@
           "codes/results/tensor_probe_response.csv": {
             "model": [
               "bardeen",
+              "fan_wang",
               "hayward"
             ],
             "ell_over_ell_ext": [
@@ -3609,14 +3610,14 @@
       "inputs": [
         {
           "path": "codes/results/tensor_probe_response.csv",
-          "sha256": "bd4dbe0b6c3363d968c56ee318766f56c5b12cac919a2fc8a39b4ad17af2fed2",
-          "size_bytes": 15431
+          "sha256": "914349e75bbd077a82e9a6e3f1b1d0b72ee7eef566e70e1547b44337448b2399",
+          "size_bytes": 23260
         }
       ],
       "output": {
         "path": "figures/tensor_probe_all_models.pdf",
-        "sha256": "b373f2cac7a8fb52980eaff13597767c511d6b24ed48c806cfa70ed12e55b56b",
-        "size_bytes": 25379
+        "sha256": "658300cecd673829f4f28282c56837d6be01b4f3a062ecb28d16027a889b069a",
+        "size_bytes": 30317
       }
     }
   }
