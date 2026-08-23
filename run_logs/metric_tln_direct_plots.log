@@ -1,0 +1,5 @@
+/Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/plot_direct_partII.py:53: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.tight_layout(); stem=f"{model_label.lower().replace('–','_').replace('--','_').replace('-','_').replace(' ','_')}_{parity}_metric_dynamic_tln_vs_ell_ratio";fig.savefig(FIG/(stem+'.png'),dpi=300);fig.savefig(FIG/(stem+'.pdf'));plt.close(fig)
+/Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/plot_direct_partII.py:71: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.tight_layout();stem=f"{model_label.lower().replace('–','_').replace('--','_').replace('-','_').replace(' ','_')}_{parity}_metric_dynamic_tln_vs_frequency";fig.savefig(FIG/(stem+'.png'),dpi=300);fig.savefig(FIG/(stem+'.pdf'));plt.close(fig)
+Wrote direct Part II figures to /Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/figures

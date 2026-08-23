@@ -1,0 +1,65 @@
+[
+  {
+    "model": "bardeen",
+    "ell_over_ell_ext": 0.6,
+    "peak_omega_M": 0.575,
+    "peak_abs": 1.090135700723249,
+    "strict_relative_change": 0.0007603161261517867
+  },
+  {
+    "model": "bardeen",
+    "ell_over_ell_ext": 0.9,
+    "peak_omega_M": 0.6375,
+    "peak_abs": 1.1756422584524413,
+    "strict_relative_change": 0.001543091010946945
+  },
+  {
+    "model": "bardeen",
+    "ell_over_ell_ext": 0.97,
+    "peak_omega_M": 0.6625,
+    "peak_abs": 1.2240513380646474,
+    "strict_relative_change": 0.001994759104602902
+  },
+  {
+    "model": "hayward",
+    "ell_over_ell_ext": 0.6,
+    "peak_omega_M": 0.4875,
+    "peak_abs": 1.106272140220589,
+    "strict_relative_change": 0.001065929593179338
+  },
+  {
+    "model": "hayward",
+    "ell_over_ell_ext": 0.9,
+    "peak_omega_M": 0.60625,
+    "peak_abs": 1.1255802524821614,
+    "strict_relative_change": 0.0007252945858647831
+  },
+  {
+    "model": "hayward",
+    "ell_over_ell_ext": 0.97,
+    "peak_omega_M": 0.6125,
+    "peak_abs": 1.1519254090961015,
+    "strict_relative_change": 0.0009066922797809393
+  },
+  {
+    "model": "fan_wang",
+    "ell_over_ell_ext": 0.6,
+    "peak_omega_M": 0.50625,
+    "peak_abs": 1.1830132194270964,
+    "strict_relative_change": 0.0013890310148778572
+  },
+  {
+    "model": "fan_wang",
+    "ell_over_ell_ext": 0.9,
+    "peak_omega_M": 0.5375,
+    "peak_abs": 1.6463741696337884,
+    "strict_relative_change": 0.0018913723740650752
+  },
+  {
+    "model": "fan_wang",
+    "ell_over_ell_ext": 0.97,
+    "peak_omega_M": 0.55,
+    "peak_abs": 1.9927669124994052,
+    "strict_relative_change": 0.0022592177417319757
+  }
+]

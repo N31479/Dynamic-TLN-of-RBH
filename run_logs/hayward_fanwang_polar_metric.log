@@ -1,0 +1,34 @@
+metric task 1/30
+metric task 2/30
+metric task 3/30
+metric task 4/30
+metric task 5/30
+metric task 6/30
+metric task 7/30
+metric task 8/30
+metric task 9/30
+metric task 10/30
+metric task 11/30
+metric task 12/30
+metric task 13/30
+metric task 14/30
+metric task 15/30
+metric task 16/30
+metric task 17/30
+metric task 18/30
+metric task 19/30
+metric task 20/30
+metric task 21/30
+metric task 22/30
+metric task 23/30
+metric task 24/30
+metric task 25/30
+metric task 26/30
+metric task 27/30
+metric task 28/30
+metric task 29/30
+metric task 30/30
+/Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/metric_level/hayward_fanwang_polar/codes/run_metric_scans.py:102: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.tight_layout();base=figs/f'{model}_polar_metric_dynamic_tln_vs_ell_ratio';fig.savefig(base.with_suffix('.png'),dpi=320);fig.savefig(base.with_suffix('.pdf'));plt.close(fig)
+/Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/metric_level/hayward_fanwang_polar/codes/run_metric_scans.py:112: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  fig.tight_layout();base=figs/f'{model}_polar_metric_dynamic_tln_vs_frequency';fig.savefig(base.with_suffix('.png'),dpi=320);fig.savefig(base.with_suffix('.pdf'));plt.close(fig)

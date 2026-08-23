@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "manuscript_figures_verified": 21,
+  "manuscript_table_inputs_verified": 12,
+  "scalar_direct_rows_verified": 81,
+  "canonical_solver_files_verified": 1,
+  "table_manifest_verified": true
+}

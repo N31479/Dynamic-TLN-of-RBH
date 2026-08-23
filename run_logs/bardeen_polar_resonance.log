@@ -1,0 +1,6 @@
+Schwarzschild: omega M=0.37287871-0.08907084i, relative error=2.084e-03
+q/qext=0.60: omega M=0.37977489-0.08696749i, peak separation=7.023e-02, max control shift=2.478e-03
+q/qext=0.90: omega M=0.38848333-0.08327511i, peak separation=6.152e-02, max control shift=4.395e-03
+q/qext=0.97: omega M=0.38925734-0.08197929i, peak separation=4.824e-02, max control shift=7.334e-03
+Wrote /Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/metric_level/bardeen_polar_resonance/results/bardeen_polar_ringdown_summary.json
+Wrote /Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/metric_level/bardeen_polar_resonance/figures/bardeen_polar_ringdown_test.png

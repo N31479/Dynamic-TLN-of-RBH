@@ -1,0 +1,13 @@
+/Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/tensor_probe_response.py:357: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  figure.tight_layout()
+/Users/vigneshwarisr/Desktop/Dynamical_TLN_RBH_FINAL/codes/tensor_probe_response.py:390: UserWarning: This figure includes Axes that are not compatible with tight_layout, so results might be incorrect.
+  figure.tight_layout()
+{
+  "definition": "Independent static tensor-probe source-response ratio and finite-frequency intermediate-zone continuation in the log(r/2M) asymptotic convention.",
+  "rows": 72,
+  "figures": [
+    "Tensor_Field_Bardeen",
+    "Tensor_Field_Hayward",
+    "tensor_probe_all_models"
+  ]
+}

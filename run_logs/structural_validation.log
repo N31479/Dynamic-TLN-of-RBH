@@ -1,0 +1,20 @@
+{
+  "bardeen": {
+    "background_identity_max_relative_error": 1.536586874683926e-09,
+    "potential_symmetry_max_absolute_error": 0.0,
+    "regge_wheeler_limit_max_relative_error": 3.4918783032626583e-15,
+    "zerilli_limit_max_relative_error": 8.035472730588578e-16
+  },
+  "hayward": {
+    "background_identity_max_relative_error": 1.6856042729633736e-08,
+    "potential_symmetry_max_absolute_error": 0.0,
+    "regge_wheeler_limit_max_relative_error": 2.732774324292515e-15,
+    "zerilli_limit_max_relative_error": 6.344305941007177e-16
+  },
+  "fan_wang": {
+    "background_identity_max_relative_error": 1.819177216079223e-11,
+    "potential_symmetry_max_absolute_error": 0.0,
+    "regge_wheeler_limit_max_relative_error": 5.506086562183267e-08,
+    "zerilli_limit_max_relative_error": 8.021788627978543e-09
+  }
+}

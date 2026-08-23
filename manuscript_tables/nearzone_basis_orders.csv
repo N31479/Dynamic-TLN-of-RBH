@@ -1,0 +1,4 @@
+sector,models,radial_order,log_order,frequency_order
+polar,Bardeen; Hayward; Fan-Wang,18,5,O(omega^4)
+axial,Bardeen,22,5,O(omega^4)
+axial,Hayward; Fan-Wang,22,6,O(omega^4)

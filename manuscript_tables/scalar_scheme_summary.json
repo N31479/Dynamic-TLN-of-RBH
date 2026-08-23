@@ -1,0 +1,87 @@
+{
+  "bardeen": {
+    "lambda_log": "3*M*q**2*(-4*M**2 + 5*q**2)/5",
+    "scheme_independent_static_shell_log_coefficient": "4*pi*M*q**2*(-4*M**2 + 5*q**2)/5",
+    "scheme_dependent_static_shell_finite_part": "-4*pi*(-12*M**3*q**2 + 15*M*q**4 - 25*lambda_fin)/75",
+    "scheme_independent_omega2_log_coefficient": "M*q**2*(-4*M**2 + 5*q**2)/10",
+    "omega2_scale_invariant_particular_combination": "(-24*L*M**3*q**2 + 30*L*M*q**4 + 4*M**3*q**2 - 5*M*q**4 + 10*lambda_fin)/60",
+    "scheme_dependent_omega2_finite_data": "lambda_2/r**2 + lambda_fin/6",
+    "note_on_rational_companion": "The -lambda_log/36 term is fixed in this displayed particular solution but is not an independently scheme-invariant Wilson coefficient.",
+    "static_source_log_x_coefficient": "-3*M*q**2*(-4*M**2 + 5*q**2)/5",
+    "dynamic_particular": "(-24*L*M**3*q**2 + 30*L*M*q**4 + 4*M**3*q**2 - 5*M*q**4 + 10*lambda_fin)/60",
+    "source_series_constants_through_resonance": [
+      "1",
+      "-2*M",
+      "2*M**2/3",
+      "0",
+      "3*M**2*q**2/2",
+      "0"
+    ],
+    "source_series_logarithms_through_resonance": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "-3*M*q**2*(-4*M**2 + 5*q**2)/5"
+    ],
+    "static_exact_equation_residual_through_checked_order": "0"
+  },
+  "hayward": {
+    "lambda_log": "32*M**3*q**2/5",
+    "scheme_independent_static_shell_log_coefficient": "128*pi*M**3*q**2/15",
+    "scheme_dependent_static_shell_finite_part": "-4*pi*(32*M**3*q**2 - 25*lambda_fin)/75",
+    "scheme_independent_omega2_log_coefficient": "16*M**3*q**2/15",
+    "omega2_scale_invariant_particular_combination": "(96*L*M**3*q**2 - 16*M**3*q**2 + 15*lambda_fin)/90",
+    "scheme_dependent_omega2_finite_data": "lambda_2/r**2 + lambda_fin/6",
+    "note_on_rational_companion": "The -lambda_log/36 term is fixed in this displayed particular solution but is not an independently scheme-invariant Wilson coefficient.",
+    "static_source_log_x_coefficient": "-32*M**3*q**2/5",
+    "dynamic_particular": "(96*L*M**3*q**2 - 16*M**3*q**2 + 15*lambda_fin)/90",
+    "source_series_constants_through_resonance": [
+      "1",
+      "-2*M",
+      "2*M**2/3",
+      "0",
+      "-2*M**2*q**2",
+      "0"
+    ],
+    "source_series_logarithms_through_resonance": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "-32*M**3*q**2/5"
+    ],
+    "static_exact_equation_residual_through_checked_order": "0"
+  },
+  "fan_wang": {
+    "lambda_log": "8*M*q**2*(6*M**2 + 20*M*q + 15*q**2)/5",
+    "scheme_independent_static_shell_log_coefficient": "32*pi*M*q**2*(6*M**2 + 20*M*q + 15*q**2)/15",
+    "scheme_dependent_static_shell_finite_part": "-4*pi*(48*M**3*q**2 + 160*M**2*q**3 + 120*M*q**4 - 25*lambda_fin)/75",
+    "scheme_independent_omega2_log_coefficient": "4*M*q**2*(6*M**2 + 20*M*q + 15*q**2)/15",
+    "omega2_scale_invariant_particular_combination": "(144*L*M**3*q**2 + 480*L*M**2*q**3 + 360*L*M*q**4 - 24*M**3*q**2 - 80*M**2*q**3 - 60*M*q**4 + 15*lambda_fin)/90",
+    "scheme_dependent_omega2_finite_data": "lambda_2/r**2 + lambda_fin/6",
+    "note_on_rational_companion": "The -lambda_log/36 term is fixed in this displayed particular solution but is not an independently scheme-invariant Wilson coefficient.",
+    "static_source_log_x_coefficient": "-8*M*q**2*(6*M**2 + 20*M*q + 15*q**2)/5",
+    "dynamic_particular": "(144*L*M**3*q**2 + 480*L*M**2*q**3 + 360*L*M*q**4 - 24*M**3*q**2 - 80*M**2*q**3 - 60*M*q**4 + 15*lambda_fin)/90",
+    "source_series_constants_through_resonance": [
+      "1",
+      "-2*M",
+      "2*M*(M + 3*q)/3",
+      "0",
+      "-2*M*q**2*(3*M + 5*q)",
+      "0"
+    ],
+    "source_series_logarithms_through_resonance": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "-8*M*q**2*(6*M**2 + 20*M*q + 15*q**2)/5"
+    ],
+    "static_exact_equation_residual_through_checked_order": "0"
+  },
+  "status": "passed"
+}

@@ -1,0 +1,19 @@
+{
+  "ratio": 0.97,
+  "peak": {
+    "ell_over_ell_ext": 0.97,
+    "omega_M": 0.6625,
+    "strict_controls": 0,
+    "delta_Rgg_real": -0.008700081933743841,
+    "delta_Rgg_imag": -1.2240204192709367,
+    "delta_Rgg_abs": 1.2240513380646474
+  },
+  "strict": {
+    "ell_over_ell_ext": 0.97,
+    "omega_M": 0.6625,
+    "strict_controls": 1,
+    "delta_Rgg_real": -0.0062779014189778826,
+    "delta_Rgg_imag": -1.2243331198801366,
+    "delta_Rgg_abs": 1.22434921508598
+  }
+}
