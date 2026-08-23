@@ -1,0 +1,20 @@
+[
+  {
+    "ell_over_ell_ext": 0.6,
+    "peak_omega_M": 0.575,
+    "peak_abs": 1.090135700723249,
+    "relative_peak_response_change": 0.0007603161261517867
+  },
+  {
+    "ell_over_ell_ext": 0.9,
+    "peak_omega_M": 0.6375,
+    "peak_abs": 1.1756422584524413,
+    "relative_peak_response_change": 0.001543091010946945
+  },
+  {
+    "ell_over_ell_ext": 0.97,
+    "peak_omega_M": 0.6625,
+    "peak_abs": 1.2240513380646474,
+    "relative_peak_response_change": 0.001994759104602902
+  }
+]

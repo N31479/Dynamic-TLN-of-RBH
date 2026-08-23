@@ -1,0 +1,27 @@
+{
+  "model": "bardeen",
+  "parity": "polar",
+  "mass": 1.0,
+  "charge": 0.6158402871356009,
+  "charge_ratio": 0.8,
+  "definition": "Near-zone source/response coefficient of reconstructed -f H0, with the zero-frequency constant fixed by the direct coupled static calculation",
+  "static_reference": 1.566386281514544,
+  "match_radii": [
+    10.0,
+    12.0,
+    14.0,
+    16.0
+  ],
+  "frequencies": [
+    0.002,
+    0.004,
+    0.006
+  ],
+  "series_order": 18,
+  "omega_order": 2,
+  "log_order": 5,
+  "calibration": "K(omega)=k_static-[c_metric(omega)-c_metric(0)]/M^5",
+  "static_fit_formula": "k_static=0.0802275 (q/M)^2+10.7611 (q/M)^4-0.149437 (q/M)^6-0.180908 (q/M)^8",
+  "precision_note": "At q/q_ext=0.5, increasing the direct static radial order from 22 to 24 changes k_static by 1.3e-5 fractionally.",
+  "important_note": "The finite-frequency correction is extracted from the full coupled ingoing solution in the reconstructed metric near-zone basis. No frequency-dependent normalization and no far-zone scattering subtraction are used."
+}

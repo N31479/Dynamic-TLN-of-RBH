@@ -1,0 +1,190 @@
+{
+  "bardeen_polar": {
+    "fit_variable": "x=ell/M",
+    "fit_powers": [
+      2,
+      4,
+      6,
+      8
+    ],
+    "fit_coefficients": [
+      0.08022747902489838,
+      10.761124524213738,
+      -0.14943698015312293,
+      -0.18090829285350205
+    ],
+    "fit_rms": 5.83733666282756e-06,
+    "small_ell_powers": [
+      2,
+      4
+    ],
+    "small_ell_coefficients": [
+      0.0797908206886909,
+      10.75981818775756
+    ],
+    "small_ell_rms": 1.4491135103374479e-06,
+    "coviello_powers": [
+      2,
+      4
+    ],
+    "coviello_coefficients": [
+      0.03,
+      10.0
+    ]
+  },
+  "bardeen_axial": {
+    "fit_variable": "x=ell/M",
+    "fit_powers": [
+      4,
+      6,
+      8,
+      10
+    ],
+    "fit_coefficients": [
+      -5.763854654067648,
+      -1.0095584572409362,
+      -0.016397176303194406,
+      -0.4595936220592396
+    ],
+    "fit_rms": 1.15034964393028e-06,
+    "small_ell_powers": [
+      4,
+      6
+    ],
+    "small_ell_coefficients": [
+      -5.765729735089285,
+      -0.9892994313369762
+    ],
+    "small_ell_rms": 8.100774035027534e-09,
+    "coviello_powers": [
+      4
+    ],
+    "coviello_coefficients": [
+      -5.8
+    ]
+  },
+  "hayward_polar": {
+    "fit_variable": "x=ell/M",
+    "fit_powers": [
+      2,
+      4,
+      6,
+      8
+    ],
+    "fit_coefficients": [
+      12.806535895931036,
+      -0.508024954059825,
+      -0.052855548207417155,
+      -0.07816258984537237
+    ],
+    "fit_rms": 3.752672369042443e-06,
+    "small_ell_powers": [
+      2,
+      4
+    ],
+    "small_ell_coefficients": [
+      12.806134208774273,
+      -0.5036298777797082
+    ],
+    "small_ell_rms": 2.1261654134147635e-06,
+    "coviello_powers": [
+      2
+    ],
+    "coviello_coefficients": [
+      13.0
+    ]
+  },
+  "hayward_axial": {
+    "fit_variable": "x=ell/M",
+    "fit_powers": [
+      4,
+      6,
+      8,
+      10
+    ],
+    "fit_coefficients": [
+      1.7997609348355808,
+      0.10161609285730462,
+      0.009910653323909883,
+      0.04608933357748692
+    ],
+    "fit_rms": 1.000496491659984e-07,
+    "small_ell_powers": [
+      4,
+      6
+    ],
+    "small_ell_coefficients": [
+      1.7999153805521297,
+      0.10049036727611177
+    ],
+    "small_ell_rms": 9.037643406622269e-10,
+    "coviello_powers": [
+      4
+    ],
+    "coviello_coefficients": [
+      1.8
+    ]
+  },
+  "fan_wang_polar": {
+    "fit_variable": "x=ell/M",
+    "fit_powers": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "fit_coefficients": [
+      215.47136550171055,
+      95.2369968225493,
+      1.4651649368568072,
+      -48.490155495027814
+    ],
+    "fit_rms": 5.351830800291092e-06,
+    "small_ell_powers": [
+      3,
+      4
+    ],
+    "small_ell_coefficients": [
+      215.3695054952316,
+      96.10240001225588
+    ],
+    "small_ell_rms": 2.9385931508755445e-06,
+    "coviello_powers": [
+      3
+    ],
+    "coviello_coefficients": [
+      220.0
+    ]
+  },
+  "fan_wang_axial": {
+    "fit_variable": "x=ell/M",
+    "fit_powers": [
+      3,
+      4,
+      5,
+      6
+    ],
+    "fit_coefficients": [
+      95.33769736029264,
+      1.8051368387200368,
+      -12.974436200755692,
+      12.739724980143182
+    ],
+    "fit_rms": 8.658418042876395e-07,
+    "small_ell_powers": [
+      3,
+      4
+    ],
+    "small_ell_coefficients": [
+      95.40704422457519,
+      -0.015474900507060045
+    ],
+    "small_ell_rms": 2.5002192483901663e-07,
+    "coviello_powers": [
+      3
+    ],
+    "coviello_coefficients": [
+      95.0
+    ]
+  }
+}

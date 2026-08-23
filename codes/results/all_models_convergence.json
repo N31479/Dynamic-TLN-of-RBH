@@ -1,0 +1,68 @@
+{
+  "classification": "broad polar scattering maxima",
+  "cases": [
+    {
+      "model": "bardeen",
+      "ell_over_ell_ext": 0.6,
+      "sampled_peak_omega_M": 0.45000000000000007,
+      "peak_abs": 1.4262071755937276,
+      "relative_peak_response_change": 0.002312278256178358
+    },
+    {
+      "model": "bardeen",
+      "ell_over_ell_ext": 0.9,
+      "sampled_peak_omega_M": 0.45000000000000007,
+      "peak_abs": 1.5454434486434552,
+      "relative_peak_response_change": 0.002564938966799927
+    },
+    {
+      "model": "bardeen",
+      "ell_over_ell_ext": 0.97,
+      "sampled_peak_omega_M": 0.4375,
+      "peak_abs": 1.5842162905892208,
+      "relative_peak_response_change": 0.003033652390203312
+    },
+    {
+      "model": "hayward",
+      "ell_over_ell_ext": 0.6,
+      "sampled_peak_omega_M": 0.45000000000000007,
+      "peak_abs": 1.3863811284338543,
+      "relative_peak_response_change": 0.002157262625756682
+    },
+    {
+      "model": "hayward",
+      "ell_over_ell_ext": 0.9,
+      "sampled_peak_omega_M": 0.45000000000000007,
+      "peak_abs": 1.4282266100889516,
+      "relative_peak_response_change": 0.0021631077989715908
+    },
+    {
+      "model": "hayward",
+      "ell_over_ell_ext": 0.97,
+      "sampled_peak_omega_M": 0.45000000000000007,
+      "peak_abs": 1.439057067995003,
+      "relative_peak_response_change": 0.002162457166601741
+    },
+    {
+      "model": "fan_wang",
+      "ell_over_ell_ext": 0.6,
+      "sampled_peak_omega_M": 0.4625,
+      "peak_abs": 1.385930758456963,
+      "relative_peak_response_change": 0.0033457228414035204
+    },
+    {
+      "model": "fan_wang",
+      "ell_over_ell_ext": 0.9,
+      "sampled_peak_omega_M": 0.7625000000000001,
+      "peak_abs": 1.8390778524515794,
+      "relative_peak_response_change": 0.006060899437855398
+    },
+    {
+      "model": "fan_wang",
+      "ell_over_ell_ext": 0.97,
+      "sampled_peak_omega_M": 0.7875,
+      "peak_abs": 2.692532225083738,
+      "relative_peak_response_change": 0.013703928773949364
+    }
+  ]
+}

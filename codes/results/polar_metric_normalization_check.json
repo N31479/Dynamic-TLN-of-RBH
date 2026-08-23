@@ -1,0 +1,9 @@
+{
+  "polar_love_normalization": "k20_polar=-(C_response/C_source)/M^5",
+  "bardeen_raw_metric_fields_present": true,
+  "hayward_fanwang_raw_metric_fields_present": true,
+  "bardeen_baseline_identity_max_error": 0.0,
+  "hayward_fanwang_baseline_identity_max_error": 4.440892098500626e-16,
+  "static_limit_statement": "All six zero-frequency constants are obtained from the direct coupled static calculation. In every case the computed frequency-dependent correction is checked to vanish as omega tends to zero.",
+  "status": "passed"
+}

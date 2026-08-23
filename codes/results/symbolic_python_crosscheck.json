@@ -1,0 +1,39 @@
+{
+  "bardeen": {
+    "background_identity_exact": true,
+    "potential_symmetry_exact": {
+      "axial": true,
+      "polar": true
+    },
+    "random_samples": 60,
+    "maximum_relative_potential_error": {
+      "axial": 1.6847956872486554e-15,
+      "polar": 1.3501710169183752e-15
+    }
+  },
+  "hayward": {
+    "background_identity_exact": true,
+    "potential_symmetry_exact": {
+      "axial": true,
+      "polar": true
+    },
+    "random_samples": 60,
+    "maximum_relative_potential_error": {
+      "axial": 3.005829628831803e-15,
+      "polar": 1.9267616326853222e-15
+    }
+  },
+  "fan_wang": {
+    "background_identity_exact": true,
+    "potential_symmetry_exact": {
+      "axial": true,
+      "polar": true
+    },
+    "random_samples": 60,
+    "maximum_relative_potential_error": {
+      "axial": 9.00600896382255e-16,
+      "polar": 2.1876056052045556e-15
+    }
+  },
+  "status": "passed"
+}

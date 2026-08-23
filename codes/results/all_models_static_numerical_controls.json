@@ -1,0 +1,38 @@
+{
+  "mass": 1.0,
+  "models": [
+    "bardeen",
+    "hayward",
+    "fan_wang"
+  ],
+  "parities": [
+    "polar",
+    "axial"
+  ],
+  "ell_over_ell_ext": [
+    0.1,
+    0.15,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.8,
+    0.95
+  ],
+  "base_series_order": 22,
+  "convergence_series_order": 24,
+  "log_order": 6,
+  "match_radii_over_M": [
+    10.0,
+    12.0,
+    14.0,
+    16.0
+  ],
+  "horizon_offset_over_M": 2e-06,
+  "relative_tolerance": 5e-10,
+  "absolute_tolerance": 5e-12,
+  "polar_metric": "-f H0",
+  "axial_metric": "h0",
+  "log_convention": "log(r/2M)"
+}

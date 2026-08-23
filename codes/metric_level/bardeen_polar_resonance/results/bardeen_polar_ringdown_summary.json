@@ -1,0 +1,54 @@
+{
+  "criterion": "A real-frequency maximum is QNM-resonance aligned when abs(omega_peak-omega_R) <= abs(omega_I). The nominal linewidth detuning determines the classification; control fits test whether it is preserved. This operational label is not a complex-pole identification.",
+  "all_qnm_resonance_aligned": true,
+  "cases": [
+    {
+      "charge_ratio": "0.6",
+      "real_axis_peak_omega_M": "0.45000000000000007",
+      "ringdown_frequency_M": "0.3797748862289333",
+      "ringdown_damping_rate_M": "0.08696749450048906",
+      "quality_factor": "2.1834300758589618",
+      "peak_ringdown_separation": "0.07022511377106677",
+      "maximum_control_shift": "0.0024779073280254693",
+      "relative_fit_residual": "0.007806628666331048",
+      "potential_peak_radius_M": "2.8324968141625733",
+      "schwarzschild_benchmark_passed": "True",
+      "linewidth_detuning": 0.8074869142133543,
+      "robust_linewidth_detuning": 0.8429886642623898,
+      "qnm_resonance_aligned": true,
+      "controls_preserve_alignment": true
+    },
+    {
+      "charge_ratio": "0.9",
+      "real_axis_peak_omega_M": "0.45000000000000007",
+      "ringdown_frequency_M": "0.3884833337174853",
+      "ringdown_damping_rate_M": "0.08327510657266889",
+      "quality_factor": "2.332529790150917",
+      "peak_ringdown_separation": "0.06151666628251479",
+      "maximum_control_shift": "0.004394561372452875",
+      "relative_fit_residual": "0.02334891654175091",
+      "potential_peak_radius_M": "2.5296006502721684",
+      "schwarzschild_benchmark_passed": "True",
+      "linewidth_detuning": 0.7387161519731362,
+      "robust_linewidth_detuning": 0.7977814977806779,
+      "qnm_resonance_aligned": true,
+      "controls_preserve_alignment": true
+    },
+    {
+      "charge_ratio": "0.97",
+      "real_axis_peak_omega_M": "0.4375",
+      "ringdown_frequency_M": "0.38925733990134664",
+      "ringdown_damping_rate_M": "0.08197929211785596",
+      "quality_factor": "2.3741199139761924",
+      "peak_ringdown_separation": "0.048242660098653356",
+      "maximum_control_shift": "0.007334319095789057",
+      "relative_fit_residual": "0.03022164916025316",
+      "potential_peak_radius_M": "2.4047958933518614",
+      "schwarzschild_benchmark_passed": "True",
+      "linewidth_detuning": 0.5884737334557393,
+      "robust_linewidth_detuning": 0.638681395913014,
+      "qnm_resonance_aligned": true,
+      "controls_preserve_alignment": true
+    }
+  ]
+}

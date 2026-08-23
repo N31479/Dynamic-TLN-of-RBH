@@ -1,0 +1,8 @@
+{
+  "definition": "Direct reconstructed metric response; the independent static Bardeen polar result fixes the zero-frequency constant and the finite-frequency correction is taken from the same Bardeen geometry. No Schwarzschild subtraction is applied.",
+  "polar_love_normalization": "k20_polar=-(C_response/C_source)/M^5",
+  "ell_over_ell_ext": 0.5,
+  "quantitative_max_Momega": 0.004,
+  "edge_diagnostic_Momega": 0.006,
+  "rows": 4
+}

@@ -1,0 +1,242 @@
+{
+  "bardeen": {
+    "fit_degree": 3,
+    "points": {
+      "1.0e-04": {
+        "real_relative_rms": 4.2022290306922834e-05,
+        "maximum_absolute_real_residual": 8.371843232629628e-06,
+        "complex_relative_rms": 4.202231467802042e-05,
+        "maximum_shell_fit_relative_rms": 1.7893116965022747e-05
+      },
+      "2.0e-04": {
+        "real_relative_rms": 9.778059074498344e-05,
+        "maximum_absolute_real_residual": 2.0780739892450883e-05,
+        "complex_relative_rms": 9.778062620154963e-05,
+        "maximum_shell_fit_relative_rms": 1.8515752532215417e-05
+      },
+      "5.0e-04": {
+        "real_relative_rms": 0.0005297336166266899,
+        "maximum_absolute_real_residual": 0.00011565659651685545,
+        "complex_relative_rms": 0.0005297336791359275,
+        "maximum_shell_fit_relative_rms": 3.364386033283075e-05
+      }
+    },
+    "controls": {
+      "test_point": {
+        "ell_over_ell_ext": 0.7,
+        "omega_M": 0.0005
+      },
+      "direct_match_radius_values": [
+        [
+          0.225136684477972,
+          2.7966871381629948e-05
+        ],
+        [
+          0.22513668345700844,
+          2.7966844558859486e-05
+        ],
+        [
+          0.22513668328522282,
+          2.7966884493779775e-05
+        ]
+      ],
+      "basis_reference_radius_values": [
+        [
+          0.2251402999648188,
+          2.7966853154745577e-05
+        ],
+        [
+          0.22513668401639747,
+          2.7966851868690357e-05
+        ],
+        [
+          0.22513484219338473,
+          2.7966850373794574e-05
+        ]
+      ],
+      "shell_windows": {
+        "12-80M": {
+          "response": [
+            0.2252523400535253,
+            2.7934492631245825e-05
+          ],
+          "relative_rms_residual": 1.5388241665396796e-05
+        },
+        "16-80M": {
+          "response": [
+            0.2252792509517626,
+            2.7913862145590107e-05
+          ],
+          "relative_rms_residual": 1.0544356650075878e-05
+        },
+        "20-80M": {
+          "response": [
+            0.22530469660430125,
+            2.7889463008625408e-05
+          ],
+          "relative_rms_residual": 7.1346620881030316e-06
+        }
+      }
+    }
+  },
+  "hayward": {
+    "fit_degree": 3,
+    "points": {
+      "1.0e-04": {
+        "real_relative_rms": 2.356805370424503e-05,
+        "maximum_absolute_real_residual": 4.882989739973809e-05,
+        "complex_relative_rms": 2.3568055656523524e-05,
+        "maximum_shell_fit_relative_rms": 1.7335155923722267e-05
+      },
+      "2.0e-04": {
+        "real_relative_rms": 8.37524046027968e-05,
+        "maximum_absolute_real_residual": 0.00018575088136785212,
+        "complex_relative_rms": 8.375240624662267e-05,
+        "maximum_shell_fit_relative_rms": 4.334484519325893e-06
+      },
+      "5.0e-04": {
+        "real_relative_rms": 0.0005101741719581026,
+        "maximum_absolute_real_residual": 0.0011819853897780952,
+        "complex_relative_rms": 0.0005101741731481178,
+        "maximum_shell_fit_relative_rms": 1.5313126241979277e-05
+      }
+    },
+    "controls": {
+      "test_point": {
+        "ell_over_ell_ext": 0.7,
+        "omega_M": 0.0005
+      },
+      "direct_match_radius_values": [
+        [
+          -1.2942335569181675,
+          4.300902510344211e-05
+        ],
+        [
+          -1.2942335572836652,
+          4.300897388287695e-05
+        ],
+        [
+          -1.2942335453838154,
+          4.300891984693547e-05
+        ]
+      ],
+      "basis_reference_radius_values": [
+        [
+          -1.294234277425571,
+          4.3008986372329334e-05
+        ],
+        [
+          -1.2942335565900178,
+          4.300898340390224e-05
+        ],
+        [
+          -1.2942179472751465,
+          4.3008989963913876e-05
+        ]
+      ],
+      "shell_windows": {
+        "12-80M": {
+          "response": [
+            -1.2949007140245783,
+            4.3019345969213296e-05
+          ],
+          "relative_rms_residual": 1.5069003260393865e-05
+        },
+        "16-80M": {
+          "response": [
+            -1.2950517910739545,
+            4.30177426807276e-05
+          ],
+          "relative_rms_residual": 1.0365017707849325e-05
+        },
+        "20-80M": {
+          "response": [
+            -1.2951960468602153,
+            4.3013778500672045e-05
+          ],
+          "relative_rms_residual": 6.979233433827767e-06
+        }
+      }
+    }
+  },
+  "fan_wang": {
+    "fit_degree": 3,
+    "points": {
+      "1.0e-04": {
+        "real_relative_rms": 1.5575423822690416e-05,
+        "maximum_absolute_real_residual": 2.3112474159869834e-05,
+        "complex_relative_rms": 1.5575425389806566e-05,
+        "maximum_shell_fit_relative_rms": 7.491292574943799e-06
+      },
+      "2.0e-04": {
+        "real_relative_rms": 7.699213412707372e-05,
+        "maximum_absolute_real_residual": 0.00011117446274155895,
+        "complex_relative_rms": 7.699213728576739e-05,
+        "maximum_shell_fit_relative_rms": 5.0995321602418065e-05
+      },
+      "5.0e-04": {
+        "real_relative_rms": 0.0005038184790072419,
+        "maximum_absolute_real_residual": 0.0007184538982594191,
+        "complex_relative_rms": 0.0005038184793000941,
+        "maximum_shell_fit_relative_rms": 6.382933319548077e-05
+      }
+    },
+    "controls": {
+      "test_point": {
+        "ell_over_ell_ext": 0.7,
+        "omega_M": 0.0005
+      },
+      "direct_match_radius_values": [
+        [
+          -0.6246499541991609,
+          9.751688326479737e-07
+        ],
+        [
+          -0.6246499506697781,
+          9.751767199346142e-07
+        ],
+        [
+          -0.6246499487314772,
+          9.751833037048831e-07
+        ]
+      ],
+      "basis_reference_radius_values": [
+        [
+          -0.6246571718329131,
+          9.751720380905317e-07
+        ],
+        [
+          -0.6246499506697782,
+          9.751767199349725e-07
+        ],
+        [
+          -0.6246589901174778,
+          9.751748411441429e-07
+        ]
+      ],
+      "shell_windows": {
+        "12-80M": {
+          "response": [
+            -0.6249689071317066,
+            9.657914712577464e-07
+          ],
+          "relative_rms_residual": 1.580111388766945e-05
+        },
+        "16-80M": {
+          "response": [
+            -0.6250460271906055,
+            9.61268592060724e-07
+          ],
+          "relative_rms_residual": 1.0737572927785359e-05
+        },
+        "20-80M": {
+          "response": [
+            -0.6251181079973113,
+            9.566431495344621e-07
+          ],
+          "relative_rms_residual": 7.237003258535507e-06
+        }
+      }
+    }
+  }
+}

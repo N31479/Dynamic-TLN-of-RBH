@@ -1,0 +1,17 @@
+{
+  "0.5": {
+    "conservative_omega2_coefficient": -8.207463091179488,
+    "dissipative_omega_coefficient": -2.3401414552112705,
+    "max_relative_conservative_fit_error": 0.01763918250019384
+  },
+  "0.8": {
+    "conservative_omega2_coefficient": -3.5622305720565532,
+    "dissipative_omega_coefficient": -0.8949801572984396,
+    "max_relative_conservative_fit_error": 0.041603206454527766
+  },
+  "0.95": {
+    "conservative_omega2_coefficient": 1.5083665618249802,
+    "dissipative_omega_coefficient": -0.13710233371512107,
+    "max_relative_conservative_fit_error": 0.08619270697846425
+  }
+}

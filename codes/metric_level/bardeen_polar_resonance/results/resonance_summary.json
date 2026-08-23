@@ -1,0 +1,23 @@
+[
+  {
+    "charge_ratio": 0.6,
+    "omega_peak_M": 0.45000000000000007,
+    "parity": "polar",
+    "peak_abs": 1.4262071755937276,
+    "relative_peak_response_change": 0.002312278256178358
+  },
+  {
+    "charge_ratio": 0.9,
+    "omega_peak_M": 0.45000000000000007,
+    "parity": "polar",
+    "peak_abs": 1.5454434486434552,
+    "relative_peak_response_change": 0.002564938966799927
+  },
+  {
+    "charge_ratio": 0.97,
+    "omega_peak_M": 0.4375,
+    "parity": "polar",
+    "peak_abs": 1.5842162905892208,
+    "relative_peak_response_change": 0.003033652390203312
+  }
+]

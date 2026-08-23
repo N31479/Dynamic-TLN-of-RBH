@@ -1,0 +1,32 @@
+{
+  "model": "Bardeen",
+  "sector": "polar",
+  "multipole": 2,
+  "mass": 1.0,
+  "ell_ext": 0.769800358919501,
+  "ell_over_ell_ext_values": [
+    0.0,
+    0.1,
+    0.2,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.8,
+    0.9,
+    0.95,
+    0.99
+  ],
+  "Momega_values": [
+    0.002,
+    0.004,
+    0.006
+  ],
+  "definition": "Direct metric near-zone response of reconstructed -f H0 with unit gravitational source and zero independent electromagnetic source.",
+  "static_baseline": "Direct coupled Bardeen polar static result.",
+  "polar_love_normalization": "k20_polar=-(C_response/C_source)/M^5.",
+  "formula": "k_dyn(ell,omega)=k_static(ell)+[k_direct(ell,omega)-k_direct(ell,0)]. No Schwarzschild subtraction is applied.",
+  "near_zone_basis": "O(omega^4), radial order 18, log order 5, radii 10M,12M,14M,16M.",
+  "controlled_range": "Momega <= 0.006; Momega=0.006 is the edge diagnostic."
+}

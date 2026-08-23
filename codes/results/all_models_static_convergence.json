@@ -1,0 +1,56 @@
+[
+  {
+    "model": "bardeen",
+    "parity": "polar",
+    "ell_over_ell_ext": 0.5,
+    "order_22": 0.24750391134623767,
+    "order_24": 0.2475071194436092,
+    "absolute_change": 3.2080973715320482e-06,
+    "fractional_change": 1.2961804741114507e-05
+  },
+  {
+    "model": "bardeen",
+    "parity": "axial",
+    "ell_over_ell_ext": 0.5,
+    "order_22": -0.1298253481249419,
+    "order_24": -0.12982548364386215,
+    "absolute_change": 1.3551892025231993e-07,
+    "fractional_change": 1.0438556276536892e-06
+  },
+  {
+    "model": "hayward",
+    "parity": "polar",
+    "ell_over_ell_ext": 0.5,
+    "order_22": 1.8859087040192213,
+    "order_24": 1.8859131775509443,
+    "absolute_change": 4.47353172305931e-06,
+    "fractional_change": 2.372082865689831e-06
+  },
+  {
+    "model": "hayward",
+    "parity": "axial",
+    "ell_over_ell_ext": 0.5,
+    "order_22": 0.0398391961235241,
+    "order_24": 0.039841153876768606,
+    "absolute_change": 1.9577532445053114e-06,
+    "fractional_change": 4.914138423966101e-05
+  },
+  {
+    "model": "fan_wang",
+    "parity": "polar",
+    "ell_over_ell_ext": 0.5,
+    "order_22": 0.746086757842755,
+    "order_24": 0.7461064331820777,
+    "absolute_change": 1.9675339322677843e-05,
+    "fractional_change": 2.63713825716025e-05
+  },
+  {
+    "model": "fan_wang",
+    "parity": "axial",
+    "ell_over_ell_ext": 0.5,
+    "order_22": 0.31007115400701074,
+    "order_24": 0.3100733742974649,
+    "absolute_change": 2.220290454157947e-06,
+    "fractional_change": 7.160583709466074e-06
+  }
+]
