@@ -28,13 +28,17 @@ class Controls:
     match_radii: tuple[float, ...] = (10.0, 12.0, 14.0, 16.0)
 
 
-MODELS = ("bardeen", "hayward")
+MODELS = ("bardeen", "hayward", "fan_wang")
 DISPLAY_FREQUENCIES = np.array([0.002, 0.004, 0.006], dtype=float)
 CHARGE_RATIOS = np.array([0.00, 0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 0.95, 0.99], dtype=float)
 
 
-def extremal_length(mass: float) -> float:
-    return 4.0 * mass / (3.0 * np.sqrt(3.0))
+def extremal_length(model: str, mass: float) -> float:
+    if model in ("bardeen", "hayward"):
+        return 4.0 * mass / (3.0 * np.sqrt(3.0))
+    if model == "fan_wang":
+        return 8.0 * mass / 27.0
+    raise ValueError(model)
 
 
 def mass_function(model: str, length: float, radius: np.ndarray | float, mass: float) -> np.ndarray:
@@ -43,6 +47,8 @@ def mass_function(model: str, length: float, radius: np.ndarray | float, mass: f
         return mass * r**3 / (r**2 + length**2) ** 1.5
     if model == "hayward":
         return mass * r**3 / (r**3 + 2.0 * mass * length**2)
+    if model == "fan_wang":
+        return mass * r**3 / (r + length) ** 3
     if model == "schwarzschild":
         return np.full_like(r, mass, dtype=float)
     raise ValueError(model)
@@ -55,6 +61,8 @@ def mass_prime(model: str, length: float, radius: np.ndarray | float, mass: floa
     if model == "hayward":
         d = r**3 + 2.0 * mass * length**2
         return 6.0 * mass**2 * length**2 * r**2 / d**2
+    if model == "fan_wang":
+        return 3.0 * mass * length * r**2 / (r + length) ** 4
     if model == "schwarzschild":
         return np.zeros_like(r, dtype=float)
     raise ValueError(model)
@@ -119,6 +127,13 @@ def f_series(model: str, length: float, mass: float, order: int) -> np.ndarray:
         k = 0
         while 2 + 6 * k <= order:
             f[2 + 6 * k] += -2.0 * mass * (-2.0 * mass * length**2) ** k
+            k += 1
+        return f
+    if model == "fan_wang":
+        k = 0
+        while 2 + 2 * k <= order:
+            coefficient = (-1.0) ** k * (k + 1.0) * (k + 2.0) / 2.0
+            f[2 + 2 * k] += -2.0 * mass * coefficient * length**k
             k += 1
         return f
     if model == "schwarzschild":
@@ -302,8 +317,8 @@ def direct_ratio(model: str, length: float, omega: float, controls: Controls, so
 def compute_scan(controls: Controls) -> tuple[list[dict[str, float | str]], dict[str, object]]:
     rows: list[dict[str, float | str]] = []
     summary: dict[str, object] = {"definition": "Independent static tensor-probe source-response ratio and finite-frequency intermediate-zone continuation in the log(r/2M) asymptotic convention.", "controls": asdict(controls), "models": {}}
-    lext = extremal_length(controls.mass)
     for model in MODELS:
+        lext = extremal_length(model, controls.mass)
         model_summary = {}
         for ratio in CHARGE_RATIOS:
             length = ratio * lext
@@ -318,6 +333,24 @@ def compute_scan(controls: Controls) -> tuple[list[dict[str, float | str]], dict
                 rows.append({"model": model, "ell_over_ell_ext": float(ratio), "ell_over_M": float(length / controls.mass), "omega_M": float(omega * controls.mass), "static_response_over_M5": float(static_value), "direct_ratio_zero_real": float(c0.real), "direct_ratio_real": float(cw.real), "direct_ratio_imag": float(cw.imag), "dynamic_response_over_M5": float(dynamic), "finite_frequency_correction_over_M5": float((cw.real - c0.real) / controls.mass**5), "static_match_residual": float(static_residual), "dynamic_match_residual": float(residual), "maximum_omega_r": float(omega * max(controls.match_radii))})
                 values[f"{omega:.6f}"] = {"direct_ratio": [cw.real, cw.imag], "dynamic_response_over_M5": dynamic, "match_residual": residual, "local_ratios": [[z.real, z.imag] for z in local]}
             model_summary[f"{ratio:.6f}"] = {"static_direct_ratio": [c0.real, c0.imag], "static_response_over_M5": static_value, "static_match_residual": static_residual, "frequencies": values}
+        if model == "fan_wang":
+            check_ratio = 1.0e-3
+            check_length = check_ratio * lext
+            check_source = dynamic_mode(model, check_length, -6, controls)
+            check_response = dynamic_mode(model, check_length, 4, controls)
+            check_value, check_residual, _ = direct_ratio(model, check_length, 0.0, controls, check_source, check_response)
+            measured_coefficient = check_value.real / (controls.mass**3 * check_length**2)
+            expected_coefficient = 128.0 / 25.0
+            relative_error = abs(measured_coefficient / expected_coefficient - 1.0)
+            if relative_error > 5.0e-3:
+                raise RuntimeError("Fan-Wang static tensor response failed the small-length analytic check")
+            model_summary["static_small_length_check"] = {
+                "ell_over_ell_ext": check_ratio,
+                "measured_coefficient_of_M3_ell2": measured_coefficient,
+                "expected_coefficient_of_M3_ell2": expected_coefficient,
+                "relative_error": relative_error,
+                "match_residual": check_residual,
+            }
         summary["models"][model] = model_summary
     return rows, summary
 
@@ -338,8 +371,10 @@ def plot_model(rows: list[dict[str, float | str]], model: str, output_dir: Path)
     for marker, omega in zip(markers, DISPLAY_FREQUENCIES):
         points = sorted([row for row in selected if abs(float(row["omega_M"]) - omega) < 1.0e-12], key=lambda item: float(item["ell_over_ell_ext"]))
         axis.plot([float(row["ell_over_ell_ext"]) for row in points], [float(row["dynamic_response_over_M5"]) for row in points], marker=marker, markersize=4.2, linewidth=1.65, label=rf"$M\omega={omega:.3f}$")
-    label = "Bardeen" if model == "bardeen" else "Hayward"
-    subscript = "B" if model == "bardeen" else "H"
+    labels = {"bardeen": "Bardeen", "hayward": "Hayward", "fan_wang": "Fan-Wang"}
+    subscripts = {"bardeen": "B", "hayward": "H", "fan_wang": "FW"}
+    label = labels[model]
+    subscript = subscripts[model]
     axis.set_xlabel(rf"$\ell_{subscript}/\ell_{{\rm ext}}$")
     axis.set_ylabel(r"$\alpha_T(\omega)/M^5$")
     axis.set_xlim(0.0, 1.0)
@@ -354,7 +389,7 @@ def plot_model(rows: list[dict[str, float | str]], model: str, output_dir: Path)
     inset.set_ylabel(r"$10^4[\alpha_T(\omega)-\alpha_T(0)]/M^5$", fontsize=7)
     inset.tick_params(labelsize=7)
     inset.grid(alpha=0.2)
-    figure.tight_layout()
+    figure.subplots_adjust(left=0.12, right=0.98, bottom=0.14, top=0.90)
     stem = f"Tensor_Field_{label}"
     figure.savefig(output_dir / f"{stem}.png", dpi=300)
     figure.savefig(output_dir / f"{stem}.pdf")
@@ -362,8 +397,10 @@ def plot_model(rows: list[dict[str, float | str]], model: str, output_dir: Path)
 
 
 def plot_combined(rows: list[dict[str, float | str]], output_dir: Path) -> None:
-    figure, axes = plt.subplots(1, 2, figsize=(11.0, 4.35), sharex=True)
+    figure, axes = plt.subplots(1, 3, figsize=(15.8, 4.35), sharex=True)
     markers = ("o", "s", "^")
+    labels = {"bardeen": "Bardeen", "hayward": "Hayward", "fan_wang": "Fan-Wang"}
+    subscripts = {"bardeen": "B", "hayward": "H", "fan_wang": "FW"}
     for axis, model in zip(axes, MODELS):
         selected = [row for row in rows if row["model"] == model]
         static_points = sorted({float(row["ell_over_ell_ext"]): float(row["static_response_over_M5"]) for row in selected}.items())
@@ -371,8 +408,8 @@ def plot_combined(rows: list[dict[str, float | str]], output_dir: Path) -> None:
         for marker, omega in zip(markers, DISPLAY_FREQUENCIES):
             points = sorted([row for row in selected if abs(float(row["omega_M"]) - omega) < 1.0e-12], key=lambda item: float(item["ell_over_ell_ext"]))
             axis.plot([float(row["ell_over_ell_ext"]) for row in points], [float(row["dynamic_response_over_M5"]) for row in points], marker=marker, markersize=3.7, linewidth=1.5, label=rf"$M\omega={omega:.3f}$")
-        label = "Bardeen" if model == "bardeen" else "Hayward"
-        subscript = "B" if model == "bardeen" else "H"
+        label = labels[model]
+        subscript = subscripts[model]
         axis.set_title(label)
         axis.set_xlabel(rf"$\ell_{subscript}/\ell_{{\rm ext}}$")
         axis.set_xlim(0.0, 1.0)
@@ -386,8 +423,8 @@ def plot_combined(rows: list[dict[str, float | str]], output_dir: Path) -> None:
         inset.tick_params(labelsize=7)
         inset.grid(alpha=0.2)
     axes[0].set_ylabel(r"$\alpha_T(\omega)/M^5$")
-    axes[1].legend(frameon=False, loc="best")
-    figure.tight_layout()
+    axes[-1].legend(frameon=False, loc="best")
+    figure.subplots_adjust(left=0.065, right=0.99, bottom=0.14, top=0.90, wspace=0.24)
     figure.savefig(output_dir / "tensor_probe_all_models.png", dpi=300)
     figure.savefig(output_dir / "tensor_probe_all_models.pdf")
     plt.close(figure)
@@ -417,7 +454,7 @@ def main() -> None:
     for model in MODELS:
         plot_model(rows, model, figure_dir)
     plot_combined(rows, figure_dir)
-    print(json.dumps({"definition": summary["definition"], "rows": len(rows), "figures": ["Tensor_Field_Bardeen", "Tensor_Field_Hayward", "tensor_probe_all_models"]}, indent=2))
+    print(json.dumps({"definition": summary["definition"], "rows": len(rows), "figures": ["Tensor_Field_Bardeen", "Tensor_Field_Hayward", "Tensor_Field_Fan-Wang", "tensor_probe_all_models"]}, indent=2))
 
 
 if __name__ == "__main__":
